@@ -110,7 +110,7 @@ public sealed partial class MainWindow
         {
             Glyph = "\uE8F1",
             FontSize = 14,
-            FontFamily = new Microsoft.UI.Xaml.Media.FontFamily("Segoe Fluent Icons")
+            FontFamily = new Microsoft.UI.Xaml.Media.FontFamily("Segoe MDL2 Assets")
         };
     }
 

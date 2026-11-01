@@ -752,7 +752,7 @@ public sealed partial class MainWindow
         var duplicate = new MenuFlyoutItem
         {
             Text = "复制标签页",
-            Icon = new FontIcon { Glyph = "\uE8C8", FontFamily = new FontFamily("Segoe Fluent Icons") }
+            Icon = new FontIcon { Glyph = "\uE8C8", FontFamily = new Microsoft.UI.Xaml.Media.FontFamily("Segoe MDL2 Assets") }
         };
         duplicate.Click += (_, _) => CreateTab(tab.Url, true, tab.IsPrivate, tab.IsHomePage);
         flyout.Items.Add(duplicate);
@@ -760,7 +760,7 @@ public sealed partial class MainWindow
         var reload = new MenuFlyoutItem
         {
             Text = "刷新标签页",
-            Icon = new FontIcon { Glyph = "\uE72C", FontFamily = new FontFamily("Segoe Fluent Icons") }
+            Icon = new FontIcon { Glyph = "\uE72C", FontFamily = new Microsoft.UI.Xaml.Media.FontFamily("Segoe MDL2 Assets") }
         };
         reload.Click += (_, _) => tab.Core?.Reload();
         flyout.Items.Add(reload);
@@ -770,7 +770,7 @@ public sealed partial class MainWindow
         var close = new MenuFlyoutItem
         {
             Text = "关闭标签页",
-            Icon = new FontIcon { Glyph = "\uE711", FontFamily = new FontFamily("Segoe Fluent Icons") }
+            Icon = new FontIcon { Glyph = "\uE711", FontFamily = new Microsoft.UI.Xaml.Media.FontFamily("Segoe MDL2 Assets") }
         };
         close.Click += (_, _) => CloseTabById(tab.Id);
         flyout.Items.Add(close);
@@ -778,7 +778,7 @@ public sealed partial class MainWindow
         var closeOthers = new MenuFlyoutItem
         {
             Text = "关闭其他标签页",
-            Icon = new FontIcon { Glyph = "\uE8BB", FontFamily = new FontFamily("Segoe Fluent Icons") }
+            Icon = new FontIcon { Glyph = "\uE8BB", FontFamily = new Microsoft.UI.Xaml.Media.FontFamily("Segoe MDL2 Assets") }
         };
         closeOthers.Click += (_, _) =>
         {
@@ -2431,7 +2431,7 @@ public sealed partial class MainWindow
                 Icon = new FontIcon
                 {
                     Glyph = glyph,
-                    FontFamily = new FontFamily("Segoe Fluent Icons")
+                    FontFamily = new Microsoft.UI.Xaml.Media.FontFamily("Segoe MDL2 Assets")
                 }
             };
             item.Click += (_, _) =>

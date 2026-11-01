@@ -3133,7 +3133,7 @@ public sealed partial class MainWindow : Window
                 {
                     Glyph = "\uE711",
                     FontSize = 12,
-                    FontFamily = new FontFamily("Segoe Fluent Icons")
+                    FontFamily = new Microsoft.UI.Xaml.Media.FontFamily("Segoe MDL2 Assets")
                 }
             };
             ToolTipService.SetToolTip(close, "关闭设置");
@@ -3174,7 +3174,7 @@ public sealed partial class MainWindow : Window
             {
                 Glyph = "\uE774",
                 FontSize = 15,
-                FontFamily = new FontFamily("Segoe Fluent Icons")
+                FontFamily = new Microsoft.UI.Xaml.Media.FontFamily("Segoe MDL2 Assets")
             }
         };
         ToolTipService.SetToolTip(button, "网络代理");
@@ -3203,7 +3203,7 @@ public sealed partial class MainWindow : Window
             {
                 Glyph = "\uE753",
                 FontSize = 15,
-                FontFamily = new FontFamily("Segoe Fluent Icons")
+                FontFamily = new Microsoft.UI.Xaml.Media.FontFamily("Segoe MDL2 Assets")
             }
         };
         ToolTipService.SetToolTip(button, "Ghost Downloader");
@@ -3262,7 +3262,7 @@ public sealed partial class MainWindow : Window
             {
                 Glyph = "\uE8C1",
                 FontSize = 15,
-                FontFamily = new FontFamily("Segoe Fluent Icons")
+                FontFamily = new Microsoft.UI.Xaml.Media.FontFamily("Segoe MDL2 Assets")
             }
         };
         ToolTipService.SetToolTip(button, "翻译网页");

@@ -1304,7 +1304,7 @@ public sealed partial class SettingsWindow : Window
                 Padding = new Thickness(0),
                 Background = new SolidColorBrush(Colors.Transparent),
                 BorderThickness = new Thickness(0),
-                Content = new FontIcon { Glyph = "\uE70E", FontSize = 10, FontFamily = new FontFamily("Segoe Fluent Icons") },
+                Content = new FontIcon { Glyph = "\uE70E", FontSize = 10, FontFamily = new Microsoft.UI.Xaml.Media.FontFamily("Segoe MDL2 Assets") },
                 IsEnabled = i > 0
             };
             Grid.SetColumn(up, 1);
@@ -1319,7 +1319,7 @@ public sealed partial class SettingsWindow : Window
                 Padding = new Thickness(0),
                 Background = new SolidColorBrush(Colors.Transparent),
                 BorderThickness = new Thickness(0),
-                Content = new FontIcon { Glyph = "\uE70D", FontSize = 10, FontFamily = new FontFamily("Segoe Fluent Icons") },
+                Content = new FontIcon { Glyph = "\uE70D", FontSize = 10, FontFamily = new Microsoft.UI.Xaml.Media.FontFamily("Segoe MDL2 Assets") },
                 IsEnabled = i < order.Count - 1
             };
             Grid.SetColumn(down, 2);
