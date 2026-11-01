@@ -64,7 +64,7 @@
                                     Margin="0,0,2,0"
                                     Click="TabLayoutMenu_Click"
                                     ToolTipService.ToolTip="标签页布局和本次记录">
-                                <FontIcon Glyph="&#xE70D;" FontSize="13" FontFamily="Segoe Fluent Icons" />
+                                <FontIcon Glyph="&#xE70D;" FontSize="13" FontFamily="{ThemeResource IconFontFamily}" />
                             </Button>
                             <Button x:Name="VerticalNewTabHeaderButton"
                                     Grid.Column="2"
@@ -73,7 +73,7 @@
                                     Height="30"
                                     Click="NewTab_Click"
                                     ToolTipService.ToolTip="新建标签页">
-                                <FontIcon Glyph="&#xE710;" FontSize="13" FontFamily="Segoe Fluent Icons" />
+                                <FontIcon Glyph="&#xE710;" FontSize="13" FontFamily="{ThemeResource IconFontFamily}" />
                             </Button>
                             <Button x:Name="VerticalTabsCollapseButton"
                                     Grid.Column="3"
@@ -82,7 +82,7 @@
                                     Height="30"
                                     Click="VerticalTabsCollapse_Click"
                                     ToolTipService.ToolTip="仅显示标签图标">
-                                <FontIcon x:Name="VerticalTabsCollapseIcon" Glyph="&#xE76B;" FontSize="13" FontFamily="Segoe Fluent Icons" />
+                                <FontIcon x:Name="VerticalTabsCollapseIcon" Glyph="&#xE76B;" FontSize="13" FontFamily="{ThemeResource IconFontFamily}" />
                             </Button>
                         </Grid>
 
@@ -214,7 +214,7 @@
                                                       HorizontalAlignment="Center"
                                                       VerticalAlignment="Center"
                                                       Foreground="{ThemeResource TextFillColorPrimaryBrush}"
-                                                      FontFamily="Segoe Fluent Icons" />
+                                                      FontFamily="{ThemeResource IconFontFamily}" />
                                         </Border>
                                     </Grid>
                                 </DataTemplate>
@@ -296,7 +296,7 @@
                                     Click="TabLayoutMenu_Click"
                                     Visibility="Collapsed"
                                     ToolTipService.ToolTip="标签页布局和本次记录">
-                                <FontIcon Glyph="&#xE70D;" FontSize="12" FontFamily="Segoe Fluent Icons" />
+                                <FontIcon Glyph="&#xE70D;" FontSize="12" FontFamily="{ThemeResource IconFontFamily}" />
                             </Button>
                             <Button x:Name="VerticalNewTabButton"
                                     Grid.Column="1"
@@ -371,7 +371,7 @@
                                 Margin="4,0,2,0"
                                 Click="TabLayoutMenu_Click"
                                 ToolTipService.ToolTip="标签页布局和本次记录">
-                            <FontIcon Glyph="&#xE70D;" FontSize="13" FontFamily="Segoe Fluent Icons" />
+                            <FontIcon Glyph="&#xE70D;" FontSize="13" FontFamily="{ThemeResource IconFontFamily}" />
                         </Button>
 
                         <ListView x:Name="HorizontalTabList"
@@ -479,7 +479,7 @@
                                                       HorizontalAlignment="Center"
                                                       VerticalAlignment="Center"
                                                       Foreground="{ThemeResource TextFillColorPrimaryBrush}"
-                                                      FontFamily="Segoe Fluent Icons" />
+                                                      FontFamily="{ThemeResource IconFontFamily}" />
                                         </Border>
                                     </Grid>
                                 </DataTemplate>
@@ -497,7 +497,7 @@
                                 BorderThickness="0"
                                 Visibility="Collapsed"
                                 Click="HorizontalTabScrollLeft_Click">
-                            <FontIcon Glyph="&#xE76B;" FontSize="10" FontFamily="Segoe Fluent Icons" />
+                            <FontIcon Glyph="&#xE76B;" FontSize="10" FontFamily="{ThemeResource IconFontFamily}" />
                         </Button>
                         <Button x:Name="HorizontalTabScrollRightButton"
                                 Grid.Column="1"
@@ -510,7 +510,7 @@
                                 BorderThickness="0"
                                 Visibility="Collapsed"
                                 Click="HorizontalTabScrollRight_Click">
-                            <FontIcon Glyph="&#xE76C;" FontSize="10" FontFamily="Segoe Fluent Icons" />
+                            <FontIcon Glyph="&#xE76C;" FontSize="10" FontFamily="{ThemeResource IconFontFamily}" />
                         </Button>
 
                         <Button x:Name="HorizontalNewTabButton"
@@ -530,7 +530,7 @@
                             <Button.RenderTransform>
                                 <TranslateTransform x:Name="HorizontalNewTabTransform" />
                             </Button.RenderTransform>
-                            <FontIcon Glyph="&#xE710;" FontSize="13" FontFamily="Segoe Fluent Icons" />
+                            <FontIcon Glyph="&#xE710;" FontSize="13" FontFamily="{ThemeResource IconFontFamily}" />
                         </Button>
                     </Grid>
 
@@ -566,19 +566,19 @@
 
                                                 <Button x:Name="BackButton" Grid.Column="0" Style="{StaticResource ToolbarButtonStyle}"
                                 Click="BackButton_Click" ToolTipService.ToolTip="后退 (Alt+左箭头)">
-                            <FontIcon Glyph="&#xE72B;" FontSize="15" FontFamily="Segoe Fluent Icons" />
+                            <FontIcon Glyph="&#xE72B;" FontSize="15" FontFamily="{ThemeResource IconFontFamily}" />
                         </Button>
                         <Button x:Name="ForwardButton" Grid.Column="1" Style="{StaticResource ToolbarButtonStyle}"
                                 Click="ForwardButton_Click" ToolTipService.ToolTip="前进 (Alt+右箭头)">
-                            <FontIcon Glyph="&#xE72A;" FontSize="15" FontFamily="Segoe Fluent Icons" />
+                            <FontIcon Glyph="&#xE72A;" FontSize="15" FontFamily="{ThemeResource IconFontFamily}" />
                         </Button>
                         <Button x:Name="ReloadButton" Grid.Column="2" Style="{StaticResource ToolbarButtonStyle}"
                                 Click="ReloadButton_Click" ToolTipService.ToolTip="刷新 (F5)">
-                            <FontIcon Glyph="&#xE72C;" FontSize="15" FontFamily="Segoe Fluent Icons" />
+                            <FontIcon Glyph="&#xE72C;" FontSize="15" FontFamily="{ThemeResource IconFontFamily}" />
                         </Button>
                         <Button x:Name="HomeButton" Grid.Column="3" Style="{StaticResource ToolbarButtonStyle}"
                                 Click="HomeButton_Click" ToolTipService.ToolTip="新建标签页 (Alt+Home)">
-                            <FontIcon Glyph="&#xE80F;" FontSize="15" FontFamily="Segoe Fluent Icons" />
+                            <FontIcon Glyph="&#xE80F;" FontSize="15" FontFamily="{ThemeResource IconFontFamily}" />
                         </Button>
 
                         <Grid Grid.Column="4" Margin="4,0" VerticalAlignment="Center">
@@ -604,7 +604,7 @@
                                 <FontIcon Grid.Column="0"
                                           Glyph="&#xE721;"
                                           FontSize="14"
-                                          FontFamily="Segoe Fluent Icons"
+                                          FontFamily="{ThemeResource IconFontFamily}"
                                           HorizontalAlignment="Center"
                                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                           VerticalAlignment="Center"
@@ -673,7 +673,7 @@
                                             Click="AddressGoButton_Click"
                                             ToolTipService.ToolTip="访问或搜索（Enter）"
                                             AutomationProperties.Name="访问或搜索">
-                                        <FontIcon Glyph="&#xE72A;" FontSize="14" FontFamily="Segoe Fluent Icons" />
+                                        <FontIcon Glyph="&#xE72A;" FontSize="14" FontFamily="{ThemeResource IconFontFamily}" />
                                     </Button>
                                     <ProgressRing x:Name="AddressLoading"
                                                   Width="16"
@@ -689,13 +689,13 @@
 
                         <Button x:Name="FavoriteButton" Grid.Column="5" Style="{StaticResource ToolbarButtonStyle}"
                                 Click="FavoriteButton_Click" ToolTipService.ToolTip="收藏此页 (Ctrl+D)">
-                            <FontIcon x:Name="FavoriteIcon" Glyph="&#xE734;" FontSize="15" FontFamily="Segoe Fluent Icons" />
+                            <FontIcon x:Name="FavoriteIcon" Glyph="&#xE734;" FontSize="15" FontFamily="{ThemeResource IconFontFamily}" />
                         </Button>
 
                         <Button x:Name="ShieldButton" Grid.Column="6" Style="{StaticResource ToolbarButtonStyle}"
                                 Click="ShieldButton_Click" ToolTipService.ToolTip="广告拦截">
                             <Grid Width="26" Height="26">
-                                <FontIcon Glyph="&#xE730;" FontSize="15" FontFamily="Segoe Fluent Icons"
+                                <FontIcon Glyph="&#xE730;" FontSize="15" FontFamily="{ThemeResource IconFontFamily}"
                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
                                 <Border x:Name="ShieldBadge"
                                         Visibility="Collapsed"
@@ -718,27 +718,27 @@
 
                         <Button x:Name="PasswordsButton" Grid.Column="7" Style="{StaticResource ToolbarButtonStyle}"
                                 Click="PasswordsButton_Click" ToolTipService.ToolTip="密码管理器">
-                            <FontIcon Glyph="&#xE192;" FontSize="15" FontFamily="Segoe Fluent Icons" />
+                            <FontIcon Glyph="&#xE192;" FontSize="15" FontFamily="{ThemeResource IconFontFamily}" />
                         </Button>
 
                         <Button x:Name="FavoritesButton" Grid.Column="8" Style="{StaticResource ToolbarButtonStyle}"
                                 Click="FavoritesButton_Click" ToolTipService.ToolTip="收藏夹">
-                            <FontIcon Glyph="&#xE728;" FontSize="15" FontFamily="Segoe Fluent Icons" />
+                            <FontIcon Glyph="&#xE728;" FontSize="15" FontFamily="{ThemeResource IconFontFamily}" />
                         </Button>
 
                         <Button x:Name="HistoryButton" Grid.Column="9" Style="{StaticResource ToolbarButtonStyle}"
                                 Click="HistoryButton_Click" ToolTipService.ToolTip="历史记录">
-                            <FontIcon Glyph="&#xE81C;" FontSize="15" FontFamily="Segoe Fluent Icons" />
+                            <FontIcon Glyph="&#xE81C;" FontSize="15" FontFamily="{ThemeResource IconFontFamily}" />
                         </Button>
 
                         <Button x:Name="ExtensionsButton" Grid.Column="10" Style="{StaticResource ToolbarButtonStyle}"
                                 Click="ExtensionsButton_Click" ToolTipService.ToolTip="扩展">
-                            <FontIcon Glyph="&#xE8F1;" FontSize="15" FontFamily="Segoe Fluent Icons" />
+                            <FontIcon Glyph="&#xE8F1;" FontSize="15" FontFamily="{ThemeResource IconFontFamily}" />
                         </Button>
 
                         <Button x:Name="DownloadsButton" Grid.Column="11" Style="{StaticResource ToolbarButtonStyle}"
                                 Click="DownloadsButton_Click" ToolTipService.ToolTip="下载内容 (Ctrl+J)">
-                            <FontIcon Glyph="&#xE896;" FontSize="15" FontFamily="Segoe Fluent Icons" />
+                            <FontIcon Glyph="&#xE896;" FontSize="15" FontFamily="{ThemeResource IconFontFamily}" />
                         </Button>
 
 
@@ -747,12 +747,12 @@
                                 Visibility="Collapsed"
                                 ToolTipService.ToolTip="展开隐藏的工具栏按钮"
                                 AutomationProperties.Name="展开隐藏的工具栏按钮">
-                            <FontIcon x:Name="ToolbarExpandIcon" Glyph="&#xE70D;" FontSize="13" FontFamily="Segoe Fluent Icons" />
+                            <FontIcon x:Name="ToolbarExpandIcon" Glyph="&#xE70D;" FontSize="13" FontFamily="{ThemeResource IconFontFamily}" />
                         </Button>
 
                         <Button x:Name="MenuButton" Grid.Column="13" Style="{StaticResource ToolbarButtonStyle}"
                                 Click="MenuButton_Click" ToolTipService.ToolTip="设置及其他">
-                            <FontIcon Glyph="&#xE712;" FontSize="15" FontFamily="Segoe Fluent Icons" />
+                            <FontIcon Glyph="&#xE712;" FontSize="15" FontFamily="{ThemeResource IconFontFamily}" />
                         </Button>
                         
                                             <Border x:Name="ZoomOverlay"
@@ -776,7 +776,7 @@
                                         Background="Transparent" BorderThickness="0" CornerRadius="6"
                                         Click="ZoomOutOverlayButton_Click"
                                         ToolTipService.ToolTip="缩小">
-                                    <FontIcon Glyph="&#xE738;" FontSize="12" FontFamily="Segoe Fluent Icons" />
+                                    <FontIcon Glyph="&#xE738;" FontSize="12" FontFamily="{ThemeResource IconFontFamily}" />
                                 </Button>
                                 <TextBlock x:Name="ZoomOverlayText"
                                            Text="100%"
@@ -790,7 +790,7 @@
                                         Background="Transparent" BorderThickness="0" CornerRadius="6"
                                         Click="ZoomInOverlayButton_Click"
                                         ToolTipService.ToolTip="放大">
-                                    <FontIcon Glyph="&#xE710;" FontSize="12" FontFamily="Segoe Fluent Icons" />
+                                    <FontIcon Glyph="&#xE710;" FontSize="12" FontFamily="{ThemeResource IconFontFamily}" />
                                 </Button>
                             </StackPanel>
                         </Border>
@@ -865,37 +865,37 @@
                                         <Button x:Name="SidebarAddFavoriteButton" Style="{StaticResource ToolbarButtonStyle}"
                                                 Width="34" Height="34" Visibility="Collapsed"
                                                 Click="SidebarAddFavorite_Click" ToolTipService.ToolTip="收藏当前页面">
-                                            <FontIcon Glyph="&#xE734;" FontSize="14" FontFamily="Segoe Fluent Icons" />
+                                            <FontIcon Glyph="&#xE734;" FontSize="14" FontFamily="{ThemeResource IconFontFamily}" />
                                         </Button>
                                         <Button x:Name="SidebarNewFolderButton" Style="{StaticResource ToolbarButtonStyle}"
                                                 Width="34" Height="34" Visibility="Collapsed"
                                                 Click="SidebarNewFolder_Click" ToolTipService.ToolTip="新建收藏夹">
-                                            <FontIcon Glyph="&#xE8F4;" FontSize="14" FontFamily="Segoe Fluent Icons" />
+                                            <FontIcon Glyph="&#xE8F4;" FontSize="14" FontFamily="{ThemeResource IconFontFamily}" />
                                         </Button>
                                         <Button x:Name="SidebarTrashButton" Style="{StaticResource ToolbarButtonStyle}"
                                                 Width="34" Height="34" Visibility="Collapsed"
                                                 Click="SidebarTrash_Click" ToolTipService.ToolTip="清除历史记录">
-                                            <FontIcon Glyph="&#xE74D;" FontSize="14" FontFamily="Segoe Fluent Icons" />
+                                            <FontIcon Glyph="&#xE74D;" FontSize="14" FontFamily="{ThemeResource IconFontFamily}" />
                                         </Button>
                                         <Button x:Name="SidebarSearchButton" Style="{StaticResource ToolbarButtonStyle}"
                                                 Width="34" Height="34" Click="SidebarSearch_Click"
                                                 ToolTipService.ToolTip="搜索">
-                                            <FontIcon Glyph="&#xE721;" FontSize="14" FontFamily="Segoe Fluent Icons" />
+                                            <FontIcon Glyph="&#xE721;" FontSize="14" FontFamily="{ThemeResource IconFontFamily}" />
                                         </Button>
                                         <Button x:Name="SidebarMoreButton" Style="{StaticResource ToolbarButtonStyle}"
                                                 Width="34" Height="34" Click="SidebarMore_Click"
                                                 ToolTipService.ToolTip="更多">
-                                            <FontIcon Glyph="&#xE712;" FontSize="14" FontFamily="Segoe Fluent Icons" />
+                                            <FontIcon Glyph="&#xE712;" FontSize="14" FontFamily="{ThemeResource IconFontFamily}" />
                                         </Button>
                                         <Button x:Name="SidebarPinButton" Style="{StaticResource ToolbarButtonStyle}"
                                                 Width="34" Height="34" Click="SidebarPin_Click"
                                                 ToolTipService.ToolTip="固定为侧栏">
-                                            <FontIcon x:Name="SidebarPinIcon" Glyph="&#xE840;" FontSize="14" FontFamily="Segoe Fluent Icons" />
+                                            <FontIcon x:Name="SidebarPinIcon" Glyph="&#xE840;" FontSize="14" FontFamily="{ThemeResource IconFontFamily}" />
                                         </Button>
                                         <Button Style="{StaticResource ToolbarButtonStyle}"
                                                 Width="34" Height="34" Click="CloseSidebar_Click"
                                                 ToolTipService.ToolTip="关闭侧栏">
-                                            <FontIcon Glyph="&#xE711;" FontSize="12" FontFamily="Segoe Fluent Icons" />
+                                            <FontIcon Glyph="&#xE711;" FontSize="12" FontFamily="{ThemeResource IconFontFamily}" />
                                         </Button>
                                     </StackPanel>
                                 </Grid>
@@ -951,7 +951,7 @@
                                                             Tag="{x:Bind Url}"
                                                             Click="RemoveFavorite_Click"
                                                             ToolTipService.ToolTip="移除收藏">
-                                                        <FontIcon Glyph="&#xE74D;" FontSize="11" FontFamily="Segoe Fluent Icons" />
+                                                        <FontIcon Glyph="&#xE74D;" FontSize="11" FontFamily="{ThemeResource IconFontFamily}" />
                                                     </Button>
                                                 </Grid>
                                             </DataTemplate>
@@ -1025,7 +1025,7 @@
                                                             Tag="{x:Bind Url}"
                                                             Click="RemoveHistory_Click"
                                                             ToolTipService.ToolTip="删除记录">
-                                                        <FontIcon Glyph="&#xE74D;" FontSize="11" FontFamily="Segoe Fluent Icons" />
+                                                        <FontIcon Glyph="&#xE74D;" FontSize="11" FontFamily="{ThemeResource IconFontFamily}" />
                                                     </Button>
                                                 </Grid>
                                             </DataTemplate>
@@ -1143,21 +1143,21 @@
                         Width="46" Height="40"
                         Click="MinimizeCaption_Click"
                         ToolTipService.ToolTip="最小化">
-                    <FontIcon Glyph="&#xE921;" FontSize="10" FontFamily="Segoe Fluent Icons" />
+                    <FontIcon Glyph="&#xE921;" FontSize="10" FontFamily="{ThemeResource IconFontFamily}" />
                 </Button>
                 <Button x:Name="MaximizeCaptionButton"
                         Style="{StaticResource ToolbarButtonStyle}"
                         Width="46" Height="40"
                         Click="MaximizeCaption_Click"
                         ToolTipService.ToolTip="最大化">
-                    <FontIcon x:Name="MaximizeCaptionIcon" Glyph="&#xE922;" FontSize="10" FontFamily="Segoe Fluent Icons" />
+                    <FontIcon x:Name="MaximizeCaptionIcon" Glyph="&#xE922;" FontSize="10" FontFamily="{ThemeResource IconFontFamily}" />
                 </Button>
                 <Button x:Name="CloseCaptionButton"
                         Style="{StaticResource ToolbarButtonStyle}"
                         Width="46" Height="40"
                         Click="CloseCaption_Click"
                         ToolTipService.ToolTip="关闭">
-                    <FontIcon Glyph="&#xE8BB;" FontSize="10" FontFamily="Segoe Fluent Icons" />
+                    <FontIcon Glyph="&#xE8BB;" FontSize="10" FontFamily="{ThemeResource IconFontFamily}" />
                 </Button>
             </StackPanel>
         </Grid>

@@ -41,7 +41,7 @@
                             HorizontalAlignment="Left"
                             Click="SettingsNavToggle_Click"
                             ToolTipService.ToolTip="折叠或展开设置导航">
-                        <FontIcon Glyph="&#xE700;" FontSize="15" FontFamily="Segoe Fluent Icons" />
+                        <FontIcon Glyph="&#xE700;" FontSize="15" FontFamily="{ThemeResource IconFontFamily}" />
                     </Button>
                     <TextBlock Text="设置"
                                Margin="56,0,0,0"
@@ -442,7 +442,7 @@
                                                             Tag="{Binding}"
                                                             Click="DeleteFavoriteFolder_Click"
                                                             ToolTipService.ToolTip="删除文件夹">
-                                                        <FontIcon Glyph="&#xE74D;" FontSize="11" FontFamily="Segoe Fluent Icons" />
+                                                        <FontIcon Glyph="&#xE74D;" FontSize="11" FontFamily="{ThemeResource IconFontFamily}" />
                                                     </Button>
                                                 </Grid>
                                             </DataTemplate>
@@ -507,13 +507,13 @@
                                                             Background="Transparent" BorderThickness="0"
                                                             Tag="{x:Bind Url}" Click="EditFavoriteSettings_Click"
                                                             ToolTipService.ToolTip="编辑收藏">
-                                                        <FontIcon Glyph="&#xE70F;" FontSize="11" FontFamily="Segoe Fluent Icons" />
+                                                        <FontIcon Glyph="&#xE70F;" FontSize="11" FontFamily="{ThemeResource IconFontFamily}" />
                                                     </Button>
                                                     <Button Grid.Column="4" Width="26" Height="26" Padding="0"
                                                             Background="Transparent" BorderThickness="0"
                                                             Tag="{x:Bind Url}" Click="DeleteFavoriteSettings_Click"
                                                             ToolTipService.ToolTip="删除收藏">
-                                                        <FontIcon Glyph="&#xE74D;" FontSize="11" FontFamily="Segoe Fluent Icons" />
+                                                        <FontIcon Glyph="&#xE74D;" FontSize="11" FontFamily="{ThemeResource IconFontFamily}" />
                                                     </Button>
                                                 </Grid>
                                             </DataTemplate>
@@ -608,7 +608,7 @@
                                                             Click="RemoveHistorySettings_Click"
                                                             ToolTipService.ToolTip="删除记录">
                                                         <FontIcon Glyph="&#xE74D;" FontSize="11"
-                                                                  FontFamily="Segoe Fluent Icons" />
+                                                                  FontFamily="{ThemeResource IconFontFamily}" />
                                                     </Button>
                                                 </Grid>
                                             </DataTemplate>
@@ -1341,7 +1341,7 @@
                                                         Background="Transparent" BorderThickness="0"
                                                         Tag="{x:Bind Id}" Click="RemoveExtension_Click"
                                                         ToolTipService.ToolTip="移除扩展">
-                                                    <FontIcon Glyph="&#xE74D;" FontSize="12" FontFamily="Segoe Fluent Icons" />
+                                                    <FontIcon Glyph="&#xE74D;" FontSize="12" FontFamily="{ThemeResource IconFontFamily}" />
                                                 </Button>
                                             </Grid>
                                         </Border>

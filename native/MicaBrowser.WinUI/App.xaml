@@ -18,6 +18,7 @@
             <SolidColorBrush x:Key="FlyoutPresenterBackground"
                              Color="{ThemeResource SystemChromeMediumColor}"
                              Opacity="0.62" />
+            <FontFamily x:Key="IconFontFamily">Segoe MDL2 Assets</FontFamily>
             <FontFamily x:Key="ContentControlThemeFontFamily">Microsoft YaHei UI</FontFamily>
             <FontFamily x:Key="BodyFontFamily">Microsoft YaHei UI</FontFamily>
             <Style TargetType="TextBlock">
@@ -54,7 +55,7 @@
                 <Setter Property="CornerRadius" Value="7" />
                 <Setter Property="HorizontalContentAlignment" Value="Center" />
                 <Setter Property="VerticalContentAlignment" Value="Center" />
-                <Setter Property="FontFamily" Value="Segoe Fluent Icons" />
+                <Setter Property="FontFamily" Value="{ThemeResource IconFontFamily}" />
                 <Setter Property="FontSize" Value="16" />
             </Style>
 
@@ -67,7 +68,7 @@
                 <Setter Property="CornerRadius" Value="4" />
                 <Setter Property="HorizontalContentAlignment" Value="Center" />
                 <Setter Property="VerticalContentAlignment" Value="Center" />
-                <Setter Property="FontFamily" Value="Segoe Fluent Icons" />
+                <Setter Property="FontFamily" Value="{ThemeResource IconFontFamily}" />
                 <Setter Property="FontSize" Value="10" />
             </Style>
 

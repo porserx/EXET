@@ -31,13 +31,13 @@
                     Background="Transparent" BorderThickness="0" CornerRadius="7"
                     Click="PrevButton_Click" ToolTipService.ToolTip="上一页"
                     AutomationProperties.Name="上一页">
-                <FontIcon Glyph="&#xE76B;" FontSize="14" FontFamily="Segoe Fluent Icons" />
+                <FontIcon Glyph="&#xE76B;" FontSize="14" FontFamily="{ThemeResource IconFontFamily}" />
             </Button>
             <Button x:Name="NextButton" Grid.Column="1" Width="34" Height="34" Padding="0"
                     Background="Transparent" BorderThickness="0" CornerRadius="7"
                     Click="NextButton_Click" ToolTipService.ToolTip="下一页"
                     AutomationProperties.Name="下一页">
-                <FontIcon Glyph="&#xE76C;" FontSize="14" FontFamily="Segoe Fluent Icons" />
+                <FontIcon Glyph="&#xE76C;" FontSize="14" FontFamily="{ThemeResource IconFontFamily}" />
             </Button>
             <TextBlock x:Name="PageText" Grid.Column="2" Text="1 / 1"
                        FontSize="12" VerticalAlignment="Center"
