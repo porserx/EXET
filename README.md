@@ -10,7 +10,6 @@
 - 新版彩色波浪应用图标已去掉白色底板，使用透明背景
 - 应用图标已同步到 EXE、快捷方式和关于页面
 
-![EXET](docs/exet-main.png)
 
 ## 立即使用
 
@@ -59,7 +58,6 @@ dist\EXET-Setup-1.0.19.exe
 - 旧版 EXET 原生主页及相关背景/问候/快捷入口设置已删除
 - Litestart 的个性化在其页面设置中完成，EXET 不复制或限制它的功能
 
-![Litestart 新标签页](docs/exet-home.png)
 
 ### 标签与无痕模式
 
@@ -74,9 +72,7 @@ dist\EXET-Setup-1.0.19.exe
 - **无痕标签页**：独立临时浏览器配置，不写入历史记录、不保存密码、不加载扩展；关闭程序后临时配置会被清理
 - 快捷键：`Ctrl+T` 新建标签，`Ctrl+Shift+N` 新建无痕标签，`Ctrl+W` 关闭标签
 
-![垂直标签仅图标](docs/exet-vertical.png)
 
-![无痕标签](docs/exet-private.png)
 
 ### 外观
 
@@ -365,7 +361,6 @@ dist\EXET-Setup-1.0.19.exe
 - 标题栏保留文字 **EXET**
 - 地址栏搜索图标与占位文字/输入文字垂直对齐
 
-![外观设置](docs/exet-appearance.png)
 
 ### 工具栏
 
@@ -477,7 +472,6 @@ dist\EXET-Setup-1.0.19.exe
 
 设置页包含 **关于 EXET**，现在会显示版本、作者、功能概览、Windows / .NET / WebView2 运行环境、数据目录和广告规则数量，并提供打开数据目录和复制环境信息的按钮。
 
-![关于](docs/exet-about.png)
 
 ## 快捷键
 
@@ -546,3 +540,10 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\build.ps1
 ---
 
 EXET · 原生 Windows 浏览器 · PorserX & EXET Team
+
+## License
+
+本项目使用 MIT License，详见 [LICENSE](LICENSE)。
+
+Copyright (c) 2026 PorserX & EXET Team
+
