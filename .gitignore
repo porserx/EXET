@@ -1,0 +1,37 @@
+# Build output
+.publish/
+.build-temp*/
+.nuget-*/
+.cef-server-publish/
+dist/
+tools/
+**/bin/
+**/obj/
+*.user
+*.suo
+*.log
+
+# Runtime / local data
+native/MicaBrowser.WinUI/Assets/Clash/verge-mihomo.exe
+native/MicaBrowser.WinUI/Assets/Clash/*.log
+**/exet-runtime.yaml
+
+# Workspace-only captures and documents (not source)
+/*.png
+/*.jpg
+/*.jpeg
+/*.docx
+/*.zip
+/*.json
+/*.py
+/missing_loc.txt
+installer/*.exe
+native/*.png
+native/*.log
+
+# OS/editor
+.vs/
+.vscode/
+.idea/
+Thumbs.db
+desktop.ini

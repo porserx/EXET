@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <PlatformTarget>x64</PlatformTarget>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <CefRuntimeRoot>$(NuGetPackageRoot)chromiumembeddedframework.runtime/154.0.34/CEF/win-x64/</CefRuntimeRoot>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="CefSharp.OffScreen.NETCore" Version="154.0.340" />
+    <CefRuntimeFiles Include="$(CefRuntimeRoot)**/*" />
+  </ItemGroup>
+  <Target Name="CopyCefRuntime" AfterTargets="Build">
+    <Copy SourceFiles="@(CefRuntimeFiles)" DestinationFiles="@(CefRuntimeFiles->'$(OutDir)%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
+  </Target>
+</Project>
+

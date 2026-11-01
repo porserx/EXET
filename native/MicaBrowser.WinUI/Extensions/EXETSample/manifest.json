@@ -1,0 +1,17 @@
+{
+  "manifest_version": 3,
+  "name": "EXET Page Companion",
+  "version": "1.0.0",
+  "description": "A tiny sample extension bundled with EXET to demonstrate Chromium extension support.",
+  "icons": {
+    "128": "icon.png"
+  },
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "js": ["content.js"],
+      "css": ["content.css"],
+      "run_at": "document_idle"
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+Mica Browser — AdGuard filter attribution
+=========================================
+
+Mica bundles two public filter lists maintained by AdGuard Software Ltd.:
+
+  * AdGuard Base filter (EasyList + AdGuard English filter)
+    https://filters.adtidy.org/extension/chromium/filters/2.txt
+
+  * AdGuard Chinese filter (EasyList China + AdGuard Chinese filter)
+    https://filters.adtidy.org/extension/chromium/filters/224.txt
+
+The rules are used only for local, request-level ad and tracker filtering.
+They are downloaded and refreshed from AdGuard's public filter distribution.
+Mica is not affiliated with, endorsed by, or sponsored by AdGuard.
+
+Filter licenses and terms: https://adguard.com/
+AdGuard filters repository: https://github.com/AdguardTeam/AdguardFilters

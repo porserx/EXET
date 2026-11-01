@@ -1,0 +1,118 @@
+<Window
+    x:Class="MicaBrowser.PdfPreviewWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Title="PDF 预览">
+    <Grid x:Name="RootGrid"
+          Background="{ThemeResource SolidBackgroundFillColorBaseBrush}"
+          UseLayoutRounding="True">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="52" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="24" />
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="0"
+              Padding="12,0"
+              ColumnSpacing="8"
+              Background="{ThemeResource LayerFillColorDefaultBrush}"
+              BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
+              BorderThickness="0,0,0,1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <Button x:Name="PrevButton" Grid.Column="0" Width="34" Height="34" Padding="0"
+                    Background="Transparent" BorderThickness="0" CornerRadius="7"
+                    Click="PrevButton_Click" ToolTipService.ToolTip="上一页"
+                    AutomationProperties.Name="上一页">
+                <FontIcon Glyph="&#xE76B;" FontSize="14" FontFamily="Segoe Fluent Icons" />
+            </Button>
+            <Button x:Name="NextButton" Grid.Column="1" Width="34" Height="34" Padding="0"
+                    Background="Transparent" BorderThickness="0" CornerRadius="7"
+                    Click="NextButton_Click" ToolTipService.ToolTip="下一页"
+                    AutomationProperties.Name="下一页">
+                <FontIcon Glyph="&#xE76C;" FontSize="14" FontFamily="Segoe Fluent Icons" />
+            </Button>
+            <TextBlock x:Name="PageText" Grid.Column="2" Text="1 / 1"
+                       FontSize="12" VerticalAlignment="Center"
+                       Margin="4,0,8,0" />
+
+            <TextBlock x:Name="DocumentTitleText" Grid.Column="3"
+                       FontSize="13" FontWeight="SemiBold"
+                       TextTrimming="CharacterEllipsis"
+                       VerticalAlignment="Center"
+                       Text="PDF" />
+
+            <ComboBox x:Name="ZoomCombo" Grid.Column="4" Width="128"
+                      VerticalAlignment="Center"
+                      SelectionChanged="ZoomCombo_SelectionChanged"
+                      ToolTipService.ToolTip="缩放">
+                <ComboBoxItem Content="适应宽度" Tag="fit" />
+                <ComboBoxItem Content="75%" Tag="0.75" />
+                <ComboBoxItem Content="100%" Tag="1" />
+                <ComboBoxItem Content="125%" Tag="1.25" />
+                <ComboBoxItem Content="150%" Tag="1.5" />
+            </ComboBox>
+
+            <Button x:Name="OpenExternalButton" Grid.Column="5"
+                    Content="外部打开" FontSize="12" Padding="12,4"
+                    VerticalAlignment="Center"
+                    Click="OpenExternalButton_Click" />
+        </Grid>
+
+        <Grid Grid.Row="1">
+            <ScrollViewer x:Name="PageScroll"
+                          HorizontalScrollMode="Enabled"
+                          HorizontalScrollBarVisibility="Auto"
+                          VerticalScrollMode="Enabled"
+                          VerticalScrollBarVisibility="Auto"
+                          ZoomMode="Disabled"
+                          Background="{ThemeResource SolidBackgroundFillColorBaseBrush}">
+                <Border Margin="24" Padding="0"
+                        Background="White"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Top">
+                    <Image x:Name="PageImage"
+                           Stretch="Uniform"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Top" />
+                </Border>
+            </ScrollViewer>
+
+            <ProgressRing x:Name="LoadingRing"
+                          Width="36" Height="36"
+                          IsActive="False"
+                          Visibility="Collapsed"
+                          HorizontalAlignment="Center"
+                          VerticalAlignment="Center" />
+
+            <StackPanel x:Name="ErrorPanel"
+                        Visibility="Collapsed"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Spacing="10"
+                        MaxWidth="520">
+                <FontIcon Glyph="&#xE783;" FontSize="28" HorizontalAlignment="Center" />
+                <TextBlock x:Name="ErrorText"
+                           TextWrapping="Wrap"
+                           TextAlignment="Center"
+                           FontSize="13" />
+                <Button Content="重试" HorizontalAlignment="Center"
+                        Click="RetryButton_Click" />
+            </StackPanel>
+        </Grid>
+
+        <TextBlock x:Name="StatusText"
+                   Grid.Row="2"
+                   Padding="12,0"
+                   FontSize="11"
+                   VerticalAlignment="Center"
+                   Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
+    </Grid>
+</Window>

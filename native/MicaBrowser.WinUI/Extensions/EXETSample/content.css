@@ -1,0 +1,22 @@
+#exet-extension-badge {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 2147483647;
+  padding: 9px 13px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 10px;
+  background: linear-gradient(135deg, rgba(12, 20, 30, 0.94), rgba(16, 33, 42, 0.94));
+  color: #dff8ff;
+  font: 500 11px/1.2 "Segoe UI", "Microsoft YaHei UI", sans-serif;
+  letter-spacing: 0.02em;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(14px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+  pointer-events: none;
+}
+
+#exet-extension-badge.exet-extension-hide {
+  opacity: 0;
+  transform: translateY(6px);
+}
