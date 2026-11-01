@@ -116,6 +116,17 @@ public sealed partial class SettingsWindow : Window
         var acrylicEffect = effect is "Acrylic" or "AcrylicThin" or "Blur" or "Smoke" or "Rainbow";
         var micaActive = micaEffect && ThemeMicaBackdrop.IsSupported;
         var acrylicActive = acrylicEffect && ThemeAcrylicBackdrop.IsSupported;
+        var legacyActive = false;
+        var settingsHwnd = WindowNative.GetWindowHandle(this);
+        if (!micaActive && !acrylicActive && (micaEffect || acrylicEffect))
+        {
+            legacyActive = LegacyAcrylicHelper.Apply(
+                settingsHwnd, effect, useDarkSurface, settings.MicaTransparency);
+        }
+        else
+        {
+            LegacyAcrylicHelper.Disable(settingsHwnd);
+        }
 
         if (micaActive)
         {
@@ -232,7 +243,7 @@ public sealed partial class SettingsWindow : Window
             MicaFallbackBorder,
             effect,
             useDarkSurface,
-            micaActive || acrylicActive,
+            micaActive || acrylicActive || legacyActive,
             MaterialEffects.GetOpacity(effect, settings.MicaTransparency).Overlay);
 
         if (micaActive)
