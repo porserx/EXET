@@ -144,11 +144,38 @@ public sealed partial class MainWindow
         engine.Items.Add(bing);
         flyout.Items.Add(engine);
 
-        var translateSettings = new MenuFlyoutItem { Text = "翻译设置…" };
-        translateSettings.Click += (_, _) => OpenSettings("general");
-        flyout.Items.Add(translateSettings);
+        var apiKey = new MenuFlyoutItem { Text = "DeepSeek API Key…" };
+        apiKey.Click += async (_, _) => await ShowDeepSeekKeyDialogAsync();
+        flyout.Items.Add(apiKey);
 
         flyout.ShowAt(anchor);
+    }
+
+    private async Task ShowDeepSeekKeyDialogAsync()
+    {
+        var settings = App.Services.Settings;
+        var box = new PasswordBox
+        {
+            Password = settings.DeepSeekApiKey ?? string.Empty,
+            PlaceholderText = "sk-…"
+        };
+        var dialog = new ContentDialog
+        {
+            Title = "DeepSeek API Key",
+            Content = box,
+            PrimaryButtonText = "保存",
+            CloseButtonText = "取消",
+            DefaultButton = ContentDialogButton.Primary,
+            XamlRoot = RootGrid.XamlRoot
+        };
+        if (await dialog.ShowAsync() == ContentDialogResult.Primary)
+        {
+            settings.DeepSeekApiKey = box.Password.Trim();
+            App.Services.SettingsStore.Save();
+            SetTransientStatus(settings.DeepSeekApiKey.Length > 0
+                ? "DeepSeek API Key 已保存"
+                : "DeepSeek API Key 已清除", 4);
+        }
     }
 
     private async Task TranslatePageAsync(string target, string targetLabel)

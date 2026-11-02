@@ -57,7 +57,6 @@ public sealed partial class SettingsWindow : Window
         BuildProxyCard();
         BuildClashCard();
         BuildUserAgentCard();
-        BuildTranslationCard();
         BuildSectionGroupHeader();
         BuildAdditionalToolbarChecks();
         InstallSettingsSearch();
