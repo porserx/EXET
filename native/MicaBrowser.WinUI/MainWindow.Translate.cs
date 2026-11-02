@@ -91,6 +91,21 @@ public sealed partial class MainWindow
             ("it", "Italiano")
         };
 
+        var smart = new MenuFlyoutItem
+        {
+            Text = (settings.SmartTranslateEnabled ? "● " : "") + "智能翻译（自动翻译外语网页）"
+        };
+        smart.Click += (_, _) =>
+        {
+            settings.SmartTranslateEnabled = !settings.SmartTranslateEnabled;
+            App.Services.SettingsStore.Save();
+            SetTransientStatus(settings.SmartTranslateEnabled
+                ? "智能翻译：已开启"
+                : "智能翻译：已关闭", 4);
+        };
+        flyout.Items.Add(smart);
+        flyout.Items.Add(new MenuFlyoutSeparator());
+
         var targetHeader = new MenuFlyoutItem { Text = "翻译为", IsEnabled = false };
         flyout.Items.Add(targetHeader);
         foreach (var (code, label) in languages)

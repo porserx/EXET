@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Globalization;
 using System.Text.Json;
 using MicaBrowser.Models;
 using MicaBrowser.Services;
@@ -310,6 +311,7 @@ public sealed partial class MainWindow
         {
             App.Services.History.Record(tab.Url, tab.Title);
             _ = TryAutofillPasswordAsync(tab);
+            _ = TryAutoTranslateAsync(tab);
         }
     }
 
@@ -983,6 +985,115 @@ public sealed partial class MainWindow
             Logger.Warn("Selected text translation failed.", ex);
             SetTransientStatus("翻译失败：" + ex.Message, 8);
         }
+    }
+
+    private readonly Dictionary<string, bool> _autoTranslateAttempts = new(StringComparer.Ordinal);
+
+    private async Task TryAutoTranslateAsync(BrowserTab tab)
+    {
+        if (!App.Services.Settings.SmartTranslateEnabled ||
+            tab.Core is null ||
+            tab.IsPrivate ||
+            tab.IsHomePage ||
+            !Uri.TryCreate(tab.Url, UriKind.Absolute, out var uri) ||
+            (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps) ||
+            uri.AbsolutePath.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        var key = tab.Id + "|" + tab.Url;
+        if (_autoTranslateAttempts.ContainsKey(key)) return;
+        _autoTranslateAttempts[key] = true;
+
+        try
+        {
+            var raw = await tab.Core.ExecuteScriptAsync("""
+                (function(){
+                  if (!document.body) return JSON.stringify({lang:'',text:''});
+                  const text=(document.body.innerText||'').replace(/\s+/g,' ').trim();
+                  return JSON.stringify({
+                    lang:(document.documentElement.lang||'').toLowerCase(),
+                    text:text.slice(0,6000)
+                  });
+                })()
+                """);
+            var json = JsonSerializer.Deserialize<string>(raw) ?? "{}";
+            using var doc = JsonDocument.Parse(json);
+            var text = doc.RootElement.TryGetProperty("text", out var textElement)
+                ? textElement.GetString() ?? string.Empty
+                : string.Empty;
+            var lang = doc.RootElement.TryGetProperty("lang", out var langElement)
+                ? langElement.GetString() ?? string.Empty
+                : string.Empty;
+            if (text.Length < 120) return;
+
+            var (detected, confidence) = DetectTextLanguage(text, lang);
+            var target = SystemTranslationTarget();
+            if (detected is null || detected == target || confidence < 0.55) return;
+
+            SetTransientStatus(
+                $"检测到网页语言：{TranslationLanguageLabel(detected)}，正在自动翻译…", 5);
+            await TranslatePageAsync(target, TranslationLanguageLabel(target));
+        }
+        catch (Exception ex)
+        {
+            Logger.Warn("Smart translation check failed.", ex);
+        }
+    }
+
+    private static string SystemTranslationTarget()
+    {
+        var culture = CultureInfo.CurrentUICulture;
+        var name = culture.Name.ToLowerInvariant();
+        if (name.StartsWith("zh")) return "zh-CN";
+        if (name.StartsWith("ja")) return "ja";
+        if (name.StartsWith("ko")) return "ko";
+        if (name.StartsWith("fr")) return "fr";
+        if (name.StartsWith("de")) return "de";
+        if (name.StartsWith("es")) return "es";
+        if (name.StartsWith("ru")) return "ru";
+        if (name.StartsWith("ar")) return "ar";
+        if (name.StartsWith("pt")) return "pt";
+        if (name.StartsWith("it")) return "it";
+        return "en";
+    }
+
+    private static (string? Language, double Confidence) DetectTextLanguage(string text, string lang)
+    {
+        int cjk = 0, latin = 0, cyrillic = 0, arabic = 0, hangul = 0, kana = 0;
+        foreach (var ch in text)
+        {
+            if (ch >= '\u3040' && ch <= '\u30ff') kana++;
+            else if (ch >= '\uac00' && ch <= '\ud7af') hangul++;
+            else if (ch >= '\u4e00' && ch <= '\u9fff') cjk++;
+            else if (ch >= '\u0400' && ch <= '\u04ff') cyrillic++;
+            else if (ch >= '\u0600' && ch <= '\u06ff') arabic++;
+            else if (char.IsLetter(ch)) latin++;
+        }
+
+        var total = cjk + latin + cyrillic + arabic + hangul + kana;
+        if (total < 40) return (null, 0);
+
+        var max = Math.Max(Math.Max(Math.Max(cjk, latin), Math.Max(cyrillic, arabic)), Math.Max(hangul, kana));
+        var confidence = (double)max / total;
+
+        if (kana > 0 && kana >= cjk / 3) return ("ja", confidence);
+        if (hangul > 0 && hangul >= max / 2) return ("ko", confidence);
+        if (cjk > 0 && cjk >= max / 2) return ("zh-CN", confidence);
+        if (cyrillic > 0 && cyrillic >= max / 2) return ("ru", confidence);
+        if (arabic > 0 && arabic >= max / 2) return ("ar", confidence);
+
+        var normalized = lang.Split('-')[0];
+        return normalized switch
+        {
+            "fr" => ("fr", confidence),
+            "de" => ("de", confidence),
+            "es" => ("es", confidence),
+            "pt" => ("pt", confidence),
+            "it" => ("it", confidence),
+            _ => ("en", confidence)
+        };
     }
 
     private string SearchUri(string query)

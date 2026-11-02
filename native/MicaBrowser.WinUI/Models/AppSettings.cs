@@ -55,6 +55,7 @@ public sealed class AppSettings : ObservableObject
     private string _deepSeekApiKey = "";
     private string _translationTarget = "zh-CN";
     private string _translationSourceLanguage = "auto";
+    private bool _smartTranslateEnabled = true;
     private bool _ghostDownloaderEnabled;
     private string _ghostDownloaderPath = "ghd";
     private int _browserZoom = 100;
@@ -205,6 +206,12 @@ public sealed class AppSettings : ObservableObject
     {
         get => _deepSeekApiKey;
         set => SetProperty(ref _deepSeekApiKey, value);
+    }
+
+    public bool SmartTranslateEnabled
+    {
+        get => _smartTranslateEnabled;
+        set => SetProperty(ref _smartTranslateEnabled, value);
     }
 
     public string TranslationSourceLanguage
