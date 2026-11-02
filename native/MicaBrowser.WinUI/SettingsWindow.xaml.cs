@@ -2381,7 +2381,7 @@ public sealed partial class SettingsWindow : Window
         });
         panel.Children.Add(new TextBlock
         {
-            Text = "工具栏翻译按钮使用这里的引擎和目标语言。",
+            Text = "工具栏翻译按钮使用这里的引擎；目标语言在工具栏 A 菜单选择。",
             TextWrapping = TextWrapping.Wrap,
             Style = (Style)Application.Current.Resources["CaptionTextStyle"]
         });
@@ -2390,11 +2390,6 @@ public sealed partial class SettingsWindow : Window
         provider.Items.Add(new ComboBoxItem { Content = "DeepSeek API", Tag = "DeepSeek" });
         provider.Items.Add(new ComboBoxItem { Content = "Bing 翻译", Tag = "Bing" });
         provider.SelectedIndex = settings.TranslationProvider == "Bing" ? 1 : 0;
-
-        var target = new ComboBox { HorizontalAlignment = HorizontalAlignment.Stretch };
-        target.Items.Add(new ComboBoxItem { Content = "中文", Tag = "zh-CN" });
-        target.Items.Add(new ComboBoxItem { Content = "English", Tag = "en" });
-        target.SelectedIndex = settings.TranslationTarget == "en" ? 1 : 0;
 
         var key = new PasswordBox
         {
@@ -2408,12 +2403,6 @@ public sealed partial class SettingsWindow : Window
             settings.TranslationProvider = (provider.SelectedItem as ComboBoxItem)?.Tag as string ?? "DeepSeek";
             App.Services.SettingsStore.Save();
         };
-        target.SelectionChanged += (_, _) =>
-        {
-            if (_loading) return;
-            settings.TranslationTarget = (target.SelectedItem as ComboBoxItem)?.Tag as string ?? "zh-CN";
-            App.Services.SettingsStore.Save();
-        };
         key.LostFocus += (_, _) =>
         {
             settings.DeepSeekApiKey = key.Password.Trim();
@@ -2421,7 +2410,6 @@ public sealed partial class SettingsWindow : Window
         };
 
         panel.Children.Add(provider);
-        panel.Children.Add(target);
         panel.Children.Add(key);
         GeneralSection.Children.Insert(Math.Min(6, GeneralSection.Children.Count), new Border
         {
