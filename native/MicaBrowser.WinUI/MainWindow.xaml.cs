@@ -647,6 +647,20 @@ public sealed partial class MainWindow : Window
             micaActive || acrylicActive || legacyActive,
             MaterialEffects.GetOpacity(effect, settings.MicaTransparency).Overlay);
 
+        if (effect == "Solid")
+        {
+            var solid = new SolidColorBrush(useDarkSurface
+                ? Windows.UI.Color.FromArgb(255, 24, 26, 30)
+                : Windows.UI.Color.FromArgb(255, 248, 249, 251));
+            RootGrid.Background = solid;
+            MicaFallbackBorder.Background = solid;
+            MicaFallbackBorder.Visibility = Visibility.Visible;
+        }
+        else
+        {
+            RootGrid.Background = new SolidColorBrush(Colors.Transparent);
+        }
+
         if (micaActive)
         {
             var alpha = (byte)Math.Round(255 * MaterialEffects.GetMicaScrimAlpha(effect, settings.MicaTransparency));
