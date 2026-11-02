@@ -878,16 +878,28 @@ public sealed partial class MainWindow
             if (string.IsNullOrWhiteSpace(selected)) return;
 
             var label = selected.Length > 28 ? selected[..28] + "…" : selected;
-            var item = tab.Core.Environment.CreateContextMenuItem(
+
+            var translate = tab.Core.Environment.CreateContextMenuItem(
+                "翻译选中文字“" + label + "”",
+                null,
+                CoreWebView2ContextMenuItemKind.Command);
+            translate.CustomItemSelected += (_, _) =>
+            {
+                DispatcherQueue.TryEnqueue(async () => await TranslateSelectedTextAsync(selected));
+            };
+
+            var search = tab.Core.Environment.CreateContextMenuItem(
                 "在网页中搜索“" + label + "”",
                 null,
                 CoreWebView2ContextMenuItemKind.Command);
-            item.CustomItemSelected += (_, _) =>
+            search.CustomItemSelected += (_, _) =>
             {
                 DispatcherQueue.TryEnqueue(() => NavigateActive(SearchUri(selected)));
             };
-            args.MenuItems.Insert(0, item);
-            args.MenuItems.Insert(1, tab.Core.Environment.CreateContextMenuItem(
+
+            args.MenuItems.Insert(0, translate);
+            args.MenuItems.Insert(1, search);
+            args.MenuItems.Insert(2, tab.Core.Environment.CreateContextMenuItem(
                 "-", null, CoreWebView2ContextMenuItemKind.Separator));
         }
         catch (Exception ex)
@@ -897,6 +909,60 @@ public sealed partial class MainWindow
         finally
         {
             deferral.Complete();
+        }
+    }
+
+    private async Task TranslateSelectedTextAsync(string text)
+    {
+        var trimmed = text.Trim();
+        if (trimmed.Length == 0) return;
+
+        try
+        {
+            var settings = App.Services.Settings;
+            SetTransientStatus("正在翻译选中文字…", 4);
+            var translated = await TranslationService.TranslateBatchAsync(
+                settings,
+                new[] { trimmed },
+                settings.TranslationTarget,
+                string.IsNullOrWhiteSpace(settings.TranslationSourceLanguage)
+                    ? "auto"
+                    : settings.TranslationSourceLanguage);
+            var value = translated.FirstOrDefault() ?? trimmed;
+
+            var body = new TextBox
+            {
+                Text = value,
+                IsReadOnly = true,
+                AcceptsReturn = true,
+                TextWrapping = TextWrapping.Wrap,
+                MinWidth = 420,
+                MaxWidth = 560,
+                MinHeight = 140,
+                MaxHeight = 360
+            };
+            var dialog = new ContentDialog
+            {
+                Title = "翻译选中文字",
+                Content = body,
+                PrimaryButtonText = "复制译文",
+                CloseButtonText = "关闭",
+                DefaultButton = ContentDialogButton.Primary,
+                XamlRoot = RootGrid.XamlRoot
+            };
+            dialog.PrimaryButtonClick += (_, _) =>
+            {
+                var package = new Windows.ApplicationModel.DataTransfer.DataPackage();
+                package.SetText(value);
+                Windows.ApplicationModel.DataTransfer.Clipboard.SetContent(package);
+            };
+            await dialog.ShowAsync();
+            SetTransientStatus("翻译完成", 3);
+        }
+        catch (Exception ex)
+        {
+            Logger.Warn("Selected text translation failed.", ex);
+            SetTransientStatus("翻译失败：" + ex.Message, 8);
         }
     }
 
