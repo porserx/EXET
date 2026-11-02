@@ -1,6 +1,7 @@
 $ErrorActionPreference = 'Stop'
 
 $root = $PSScriptRoot
+& (Join-Path $root 'version.ps1') | Out-Null
 $dotnet = Join-Path $root 'tools\dotnet\dotnet.exe'
 $project = Join-Path $root 'native\MicaBrowser.WinUI\MicaBrowser.WinUI.csproj'
 $programsRoot = Join-Path $env:LOCALAPPDATA 'Programs'
@@ -51,7 +52,7 @@ if (-not (Test-Path $targetExe)) {
 }
 
 $installedFileVersion = (Get-Item $targetExe).VersionInfo.FileVersion
-if (-not $installedFileVersion.StartsWith($displayVersion, [StringComparison]::OrdinalIgnoreCase)) {
+if ([version]$installedFileVersion -ne [version]($displayVersion + '.0')) {
     throw "Installed EXE version mismatch: expected $displayVersion, got $installedFileVersion."
 }
 
