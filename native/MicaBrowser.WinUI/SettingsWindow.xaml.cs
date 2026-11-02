@@ -38,6 +38,8 @@ public sealed partial class SettingsWindow : Window
     public ObservableCollection<DownloadItem> Downloads => _owner.Downloads;
     public ObservableCollection<HistoryEntry> History => App.Services.History.Items;
     private bool _extensionsReady;
+    private string _settingsHistoryQuery = "";
+    private string _settingsFavoriteQuery = "";
     private ThemeMicaBackdrop? _backdrop;
     private ThemeAcrylicBackdrop? _acrylicBackdrop;
     private Storyboard? _sectionAnimation;
@@ -58,6 +60,7 @@ public sealed partial class SettingsWindow : Window
         BuildTranslationCard();
         BuildSectionGroupHeader();
         BuildAdditionalToolbarChecks();
+        InstallSettingsSearch();
         AppearanceSection.Loaded += (_, _) => DispatcherQueue.TryEnqueue(BuildNightModeProxy);
         var hwnd = WindowNative.GetWindowHandle(this);
         NativeWindowHelper.Attach(hwnd);
@@ -630,6 +633,66 @@ public sealed partial class SettingsWindow : Window
         }
     }
 
+    private void InstallSettingsSearch()
+    {
+        var historySearch = new TextBox
+        {
+            PlaceholderText = "搜索历史记录",
+            Height = 34,
+            Margin = new Thickness(0, 4, 0, 0)
+        };
+        historySearch.TextChanged += (_, _) =>
+        {
+            _settingsHistoryQuery = historySearch.Text.Trim();
+            RefreshSettingsHistoryGroups();
+        };
+        if (HistorySection is not null)
+        {
+            HistorySection.Children.Insert(Math.Min(1, HistorySection.Children.Count), historySearch);
+        }
+
+        var favoriteSearch = new TextBox
+        {
+            PlaceholderText = "搜索收藏夹",
+            Height = 34,
+            Margin = new Thickness(0, 4, 0, 0)
+        };
+        favoriteSearch.TextChanged += (_, _) =>
+        {
+            _settingsFavoriteQuery = favoriteSearch.Text.Trim();
+            if (_settingsFavoriteQuery.Length == 0)
+            {
+                ShowFavoriteFolderList();
+            }
+            else
+            {
+                ApplyFavoriteSearch();
+            }
+        };
+        if (FavoritesSection is not null)
+        {
+            FavoritesSection.Children.Insert(Math.Min(1, FavoritesSection.Children.Count), favoriteSearch);
+        }
+    }
+
+    private void ApplyFavoriteSearch()
+    {
+        var query = _settingsFavoriteQuery;
+        if (query.Length == 0) return;
+        FavoriteFoldersList.Visibility = Visibility.Collapsed;
+        FavoriteFolderItemsHeader.Visibility = Visibility.Visible;
+        SettingsFavoritesList.Visibility = Visibility.Visible;
+        CurrentFavoriteFolderText.Text = "搜索结果";
+        FavoriteFolderItems.Clear();
+        foreach (var entry in App.Services.Favorites.Items.Where(item =>
+                     item.Title.Contains(query, StringComparison.OrdinalIgnoreCase) ||
+                     item.Url.Contains(query, StringComparison.OrdinalIgnoreCase) ||
+                     item.Folder.Contains(query, StringComparison.OrdinalIgnoreCase)))
+        {
+            FavoriteFolderItems.Add(entry);
+        }
+    }
+
     private void RefreshSettingsHistoryGroups()
     {
         if (SettingsHistoryGrouped is null)
@@ -639,11 +702,19 @@ public sealed partial class SettingsWindow : Window
 
         SettingsHistoryGrouped.Children.Clear();
         var items = App.Services.History.Items.OrderByDescending(item => item.VisitedAt).ToList();
+        var query = _settingsHistoryQuery;
+        if (query.Length > 0)
+        {
+            items = items.Where(item =>
+                item.Title.Contains(query, StringComparison.OrdinalIgnoreCase) ||
+                item.Url.Contains(query, StringComparison.OrdinalIgnoreCase) ||
+                item.Host.Contains(query, StringComparison.OrdinalIgnoreCase)).ToList();
+        }
         if (items.Count == 0)
         {
             SettingsHistoryGrouped.Children.Add(new TextBlock
             {
-                Text = "还没有浏览记录",
+                Text = query.Length > 0 ? "没有匹配的历史记录" : "还没有浏览记录",
                 FontSize = 12,
                 Opacity = 0.6,
                 Margin = new Thickness(4, 12, 4, 4)
@@ -958,7 +1029,11 @@ public sealed partial class SettingsWindow : Window
         }
 
         RefreshFavoriteFoldersHint();
-        if (_currentFavoriteFolder is not null && folders.Contains(_currentFavoriteFolder))
+        if (_settingsFavoriteQuery.Length > 0)
+        {
+            ApplyFavoriteSearch();
+        }
+        else if (_currentFavoriteFolder is not null && folders.Contains(_currentFavoriteFolder))
         {
             ShowFavoriteFolder(_currentFavoriteFolder);
         }
@@ -1713,12 +1788,15 @@ public sealed partial class SettingsWindow : Window
         var cards = new Grid { ColumnSpacing = 8, RowSpacing = 8, HorizontalAlignment = HorizontalAlignment.Stretch };
         cards.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         cards.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+        cards.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         cards.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         cards.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         AddMaterialCard(cards, 0, 0, "Mica", "Mica", "柔和云母");
         AddMaterialCard(cards, 0, 1, "Alt", "Mica Alt", "层次云母");
         AddMaterialCard(cards, 1, 0, "Acrylic", "亚克力", "磨砂玻璃");
         AddMaterialCard(cards, 1, 1, "AcrylicThin", "细亚克力", "更透亮的磨砂");
+        AddMaterialCard(cards, 2, 0, "Solid", "纯色", "不使用透明材质");
+        AddMaterialCard(cards, 2, 1, "Rainbow", "炫彩", "彩色渐变叠加");
         AcrylicColorPanel.Children.Add(cards);
         RefreshMaterialCards();
     }
@@ -1761,7 +1839,6 @@ public sealed partial class SettingsWindow : Window
     private void RefreshMaterialCards()
     {
         var selected = App.Services.Settings.MicaMaterial;
-        if (selected is "Blur" or "Smoke" or "Rainbow") selected = "Acrylic";
         var accent = new SolidColorBrush(ThemeAccent.Parse(App.Services.Settings.AccentColor));
         var clear = new SolidColorBrush(Colors.Transparent);
         foreach (var (card, tag) in _materialCards)
