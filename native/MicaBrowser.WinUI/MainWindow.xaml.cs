@@ -193,6 +193,7 @@ public sealed partial class MainWindow : Window
         AddressBox.FontFamily = new FontFamily("Segoe UI");
         AddressDisplay.FontFamily = new FontFamily("Segoe UI");
         BuildAddressContextMenu();
+        ConfigureCaptionHover();
         InstallDownloadDeleteButtons();
         ContentShell.SizeChanged += (_, _) => UpdateFloatingPanelSize();
         HistorySearchBox.TextChanged += HistorySearchBox_TextChanged;
@@ -2475,6 +2476,26 @@ public sealed partial class MainWindow : Window
             if (nested is not null) return nested;
         }
         return null;
+    }
+
+    private void ConfigureCaptionHover()
+    {
+        var hover = new SolidColorBrush(Windows.UI.Color.FromArgb(56, 128, 128, 128));
+        var pressed = new SolidColorBrush(Windows.UI.Color.FromArgb(92, 128, 128, 128));
+        foreach (var button in new[] { MinimizeCaptionButton, MaximizeCaptionButton })
+        {
+            button.Resources["ButtonBackgroundPointerOver"] = hover;
+            button.Resources["ButtonBackgroundPressed"] = pressed;
+        }
+
+        CloseCaptionButton.Resources["ButtonBackgroundPointerOver"] =
+            new SolidColorBrush(Windows.UI.Color.FromArgb(255, 232, 17, 35));
+        CloseCaptionButton.Resources["ButtonBackgroundPressed"] =
+            new SolidColorBrush(Windows.UI.Color.FromArgb(255, 193, 12, 30));
+        CloseCaptionButton.Resources["ButtonForegroundPointerOver"] =
+            new SolidColorBrush(Colors.White);
+        CloseCaptionButton.Resources["ButtonForegroundPressed"] =
+            new SolidColorBrush(Colors.White);
     }
 
     private void BuildAddressContextMenu()
