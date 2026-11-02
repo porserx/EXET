@@ -48,6 +48,29 @@ public sealed partial class MainWindow
         ShowTranslateMenu((FrameworkElement)sender);
     }
 
+    private static string TranslationLanguageLabel(string code) => code switch
+    {
+        "zh-CN" => "中文",
+        "en" => "English",
+        "ja" => "日本語",
+        "ko" => "한국어",
+        "fr" => "Français",
+        "de" => "Deutsch",
+        "es" => "Español",
+        "ru" => "Русский",
+        "ar" => "العربية",
+        "pt" => "Português",
+        "it" => "Italiano",
+        _ => code
+    };
+
+    private void UpdateTranslateButtonTooltip()
+    {
+        if (_translateButton is null) return;
+        var label = TranslationLanguageLabel(App.Services.Settings.TranslationTarget);
+        ToolTipService.SetToolTip(_translateButton, "翻译网页（目标：" + label + "）");
+    }
+
     private void ShowTranslateMenu(FrameworkElement anchor)
     {
         var settings = App.Services.Settings;
@@ -190,6 +213,8 @@ public sealed partial class MainWindow
         var settings = App.Services.Settings;
         settings.TranslationTarget = target;
         App.Services.SettingsStore.Save();
+        Logger.Info($"Translation target saved: {target}");
+        UpdateTranslateButtonTooltip();
         var source = string.IsNullOrWhiteSpace(settings.TranslationSourceLanguage)
             ? "auto"
             : settings.TranslationSourceLanguage;

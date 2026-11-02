@@ -1,5 +1,5 @@
 #define MyAppName "EXET"
-#define MyAppVersion "1.1.6"
+#define MyAppVersion "1.1.7"
 #define MyAppPublisher "EXET"
 #define MyAppExeName "EXET.exe"
 

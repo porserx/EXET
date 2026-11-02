@@ -885,7 +885,7 @@ public sealed partial class MainWindow
                 CoreWebView2ContextMenuItemKind.Command);
             translate.CustomItemSelected += (_, _) =>
             {
-                DispatcherQueue.TryEnqueue(async () => await TranslateSelectedTextAsync(selected));
+                DispatcherQueue.TryEnqueue(async () => await TranslateSelectedTextAsync(tab, selected));
             };
 
             var search = tab.Core.Environment.CreateContextMenuItem(
@@ -912,10 +912,10 @@ public sealed partial class MainWindow
         }
     }
 
-    private async Task TranslateSelectedTextAsync(string text)
+    private async Task TranslateSelectedTextAsync(BrowserTab tab, string text)
     {
         var trimmed = text.Trim();
-        if (trimmed.Length == 0) return;
+        if (trimmed.Length == 0 || tab.Core is null) return;
 
         try
         {
@@ -929,35 +929,54 @@ public sealed partial class MainWindow
                     ? "auto"
                     : settings.TranslationSourceLanguage);
             var value = translated.FirstOrDefault() ?? trimmed;
+            var json = JsonSerializer.Serialize(value);
 
-            var body = new TextBox
-            {
-                Text = value,
-                IsReadOnly = true,
-                AcceptsReturn = true,
-                TextWrapping = TextWrapping.Wrap,
-                MinWidth = 420,
-                MaxWidth = 560,
-                MinHeight = 140,
-                MaxHeight = 360
-            };
-            var dialog = new ContentDialog
-            {
-                Title = "翻译选中文字",
-                Content = body,
-                PrimaryButtonText = "复制译文",
-                CloseButtonText = "关闭",
-                DefaultButton = ContentDialogButton.Primary,
-                XamlRoot = RootGrid.XamlRoot
-            };
-            dialog.PrimaryButtonClick += (_, _) =>
-            {
-                var package = new Windows.ApplicationModel.DataTransfer.DataPackage();
-                package.SetText(value);
-                Windows.ApplicationModel.DataTransfer.Clipboard.SetContent(package);
-            };
-            await dialog.ShowAsync();
-            SetTransientStatus("翻译完成", 3);
+            var script = """
+                (function(text){
+                  const old = document.getElementById('exet-selection-translation');
+                  if (old) old.remove();
+                  let left = 24, top = 80;
+                  const sel = window.getSelection();
+                  if (sel && sel.rangeCount) {
+                    const r = sel.getRangeAt(0).getBoundingClientRect();
+                    left = r.left;
+                    top = r.bottom + 8;
+                  }
+                  const width = 420;
+                  left = Math.max(12, Math.min(left, innerWidth - width - 16));
+                  top = Math.max(12, Math.min(top, innerHeight - 160));
+                  const box = document.createElement('div');
+                  box.id = 'exet-selection-translation';
+                  box.textContent = text;
+                  Object.assign(box.style, {
+                    position: 'fixed', left: left + 'px', top: top + 'px',
+                    width: 'auto', maxWidth: width + 'px', maxHeight: '220px',
+                    overflow: 'auto', zIndex: '2147483647',
+                    padding: '12px 34px 12px 14px', borderRadius: '12px',
+                    background: 'rgba(28,30,34,.96)', color: '#fff',
+                    font: '13px/1.6 "Microsoft YaHei UI", sans-serif',
+                    boxShadow: '0 10px 30px rgba(0,0,0,.35)',
+                    border: '1px solid rgba(255,255,255,.14)',
+                    whiteSpace: 'pre-wrap', cursor: 'copy'
+                  });
+                  const close = document.createElement('button');
+                  close.textContent = '×';
+                  Object.assign(close.style, {
+                    position: 'absolute', right: '8px', top: '4px',
+                    border: '0', background: 'transparent', color: '#fff',
+                    fontSize: '18px', lineHeight: '20px', cursor: 'pointer'
+                  });
+                  close.onclick = () => box.remove();
+                  box.appendChild(close);
+                  box.addEventListener('click', () => {
+                    if (navigator.clipboard) navigator.clipboard.writeText(text);
+                  });
+                  document.body.appendChild(box);
+                  return true;
+                })(__VALUE__)
+                """.Replace("__VALUE__", json);
+            await tab.Core.ExecuteScriptAsync(script);
+            SetTransientStatus("译文已显示在网页中（点击浮层可复制）", 4);
         }
         catch (Exception ex)
         {

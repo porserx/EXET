@@ -3,7 +3,7 @@
 EXET 是一款原生 Windows 浏览器。窗口、标签页、地址栏、工具栏和设置页由 WinUI 3 原生控件绘制，网页内容由 WebView2 渲染。
 
 ```text
-版本：1.1.6
+版本：1.1.7
 平台：Windows 10 1809+ / Windows 11，x64
 许可：MIT
 ```

@@ -2322,7 +2322,11 @@ public sealed partial class MainWindow : Window
         ExtensionsButton.Visibility = Show(s.ShowExtensionsButton);
         DownloadsButton.Visibility = Show(s.ShowDownloadsButton);
         HistoryButton.Visibility = Show(s.ShowHistoryButton);
-        if (_translateButton is not null) _translateButton.Visibility = Show(s.ShowTranslateButton);
+        if (_translateButton is not null)
+        {
+            _translateButton.Visibility = Show(s.ShowTranslateButton);
+            UpdateTranslateButtonTooltip();
+        }
         if (_proxyButton is not null) _proxyButton.Visibility = Show(s.ShowProxyButton);
         if (_ghostButton is not null) _ghostButton.Visibility = Show(s.ShowGhostButton);
 
