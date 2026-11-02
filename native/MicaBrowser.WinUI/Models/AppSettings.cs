@@ -53,6 +53,8 @@ public sealed class AppSettings : ObservableObject
     private string _userAgentCustom = "";
     private string _translationProvider = "DeepSeek";
     private string _deepSeekApiKey = "";
+    private string _libreTranslateUrl = "http://127.0.0.1:5000";
+    private string _libreTranslateApiKey = "";
     private string _translationTarget = "zh-CN";
     private string _translationSourceLanguage = "auto";
     private bool _smartTranslateEnabled = true;
@@ -200,6 +202,18 @@ public sealed class AppSettings : ObservableObject
     {
         get => _translationProvider;
         set => SetProperty(ref _translationProvider, value);
+    }
+
+    public string LibreTranslateUrl
+    {
+        get => _libreTranslateUrl;
+        set => SetProperty(ref _libreTranslateUrl, value);
+    }
+
+    public string LibreTranslateApiKey
+    {
+        get => _libreTranslateApiKey;
+        set => SetProperty(ref _libreTranslateApiKey, value);
     }
 
     public string DeepSeekApiKey

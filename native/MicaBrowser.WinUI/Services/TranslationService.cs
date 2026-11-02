@@ -18,6 +18,10 @@ public static class TranslationService
         Timeout = TimeSpan.FromSeconds(35)
     };
 
+    private static readonly SemaphoreSlim MyMemoryGate = new(1, 1);
+    private static DateTime _myMemoryLastRequestUtc = DateTime.MinValue;
+    private static DateTime _myMemoryCooldownUntilUtc = DateTime.MinValue;
+
     public static async Task<IReadOnlyList<string>> TranslateBatchAsync(
         AppSettings settings,
         IReadOnlyList<string> texts,
@@ -25,6 +29,10 @@ public static class TranslationService
         string source = "auto")
     {
         if (texts.Count == 0) return Array.Empty<string>();
+        if (string.Equals(settings.TranslationProvider, "LibreTranslate", StringComparison.OrdinalIgnoreCase))
+        {
+            return await TranslateLibreTranslateAsync(settings, texts, target, source);
+        }
         if (string.Equals(settings.TranslationProvider, "Bing", StringComparison.OrdinalIgnoreCase) ||
             string.IsNullOrWhiteSpace(settings.DeepSeekApiKey))
         {
@@ -38,6 +46,82 @@ public static class TranslationService
             }
         }
         return await TranslateDeepSeekAsync(settings, texts, target, source);
+    }
+
+    private static async Task<IReadOnlyList<string>> TranslateLibreTranslateAsync(
+        AppSettings settings, IReadOnlyList<string> texts, string target, string source)
+    {
+        var baseUrl = (settings.LibreTranslateUrl ?? string.Empty).Trim().TrimEnd('/');
+        if (baseUrl.Length == 0)
+        {
+            throw new InvalidOperationException("请先在 A 菜单设置 LibreTranslate 地址");
+        }
+        if (!baseUrl.EndsWith("/translate", StringComparison.OrdinalIgnoreCase))
+        {
+            baseUrl += "/translate";
+        }
+
+        var result = new string[texts.Count];
+        using var gate = new SemaphoreSlim(4);
+        var tasks = Enumerable.Range(0, texts.Count).Select(async index =>
+        {
+            await gate.WaitAsync();
+            try
+            {
+                var payload = new Dictionary<string, object>
+                {
+                    ["q"] = texts[index],
+                    ["source"] = LibreLanguage(source, allowAuto: true),
+                    ["target"] = LibreLanguage(target, allowAuto: false),
+                    ["format"] = "text"
+                };
+                if (!string.IsNullOrWhiteSpace(settings.LibreTranslateApiKey))
+                {
+                    payload["api_key"] = settings.LibreTranslateApiKey.Trim();
+                }
+                using var request = new HttpRequestMessage(HttpMethod.Post, baseUrl);
+                request.Content = new StringContent(
+                    JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
+                using var response = await Client.SendAsync(request);
+                var body = await response.Content.ReadAsStringAsync();
+                if (!response.IsSuccessStatusCode)
+                {
+                    throw new InvalidOperationException(
+                        $"LibreTranslate 翻译失败：{(int)response.StatusCode} {body.Trim()}");
+                }
+                using var doc = JsonDocument.Parse(body);
+                result[index] = doc.RootElement.TryGetProperty("translatedText", out var value)
+                    ? value.GetString() ?? texts[index]
+                    : texts[index];
+            }
+            finally
+            {
+                gate.Release();
+            }
+        });
+        await Task.WhenAll(tasks);
+        return result;
+    }
+
+    private static string LibreLanguage(string code, bool allowAuto)
+    {
+        if (allowAuto && (string.IsNullOrWhiteSpace(code) || code == "auto")) return "auto";
+        return code switch
+        {
+            "zh-CN" or "zh-Hans" => "zh",
+            "zh-TW" or "zh-Hant" => "zt",
+            "en" => "en",
+            "ja" => "ja",
+            "ko" => "ko",
+            "fr" => "fr",
+            "de" => "de",
+            "es" => "es",
+            "ru" => "ru",
+            "ar" => "ar",
+            "pt" => "pt",
+            "it" => "it",
+            _ => code
+        };
     }
 
     private static async Task<IReadOnlyList<string>> TranslateDeepSeekAsync(
@@ -162,42 +246,159 @@ public static class TranslationService
         }
         var to = MyMemoryLanguage(target);
         from = MyMemoryLanguage(from);
-        var joined = string.Join("\n", texts);
-        var url = "https://api.mymemory.translated.net/get?q=" + Uri.EscapeDataString(joined) +
-                  "&langpair=" + Uri.EscapeDataString(from + "|" + to);
-        using var response = await Client.GetAsync(url);
-        var body = await response.Content.ReadAsStringAsync();
-        if (!response.IsSuccessStatusCode)
-        {
-            throw new InvalidOperationException($"MyMemory 翻译失败：{(int)response.StatusCode}");
-        }
-        using var doc = JsonDocument.Parse(body);
-        var value = doc.RootElement.GetProperty("responseData").GetProperty("translatedText").GetString() ?? string.Empty;
-        value = WebUtility.HtmlDecode(value);
-        var parts = value.Split('\n');
-        if (parts.Length == texts.Count)
-        {
-            return parts;
-        }
 
         var result = new List<string>(texts.Count);
+        var group = new List<string>();
+        var groupLength = 0;
+        const int maxUrlLength = 1400;
+
+        async Task FlushAsync()
+        {
+            if (group.Count == 0) return;
+            var joined = string.Join("\n", group);
+            var translated = await TranslateMyMemoryJoinedSafeAsync(joined, from, to);
+            if (translated is not null && translated.Count == group.Count)
+            {
+                result.AddRange(translated);
+            }
+            else
+            {
+                foreach (var text in group)
+                {
+                    result.Add(await TranslateMyMemorySingleAsync(text, from, to));
+                }
+            }
+            group.Clear();
+            groupLength = 0;
+        }
+
         foreach (var text in texts)
         {
-            result.Add(await TranslateMyMemorySingleAsync(text, from, to));
+            if (string.IsNullOrEmpty(text))
+            {
+                result.Add(string.Empty);
+                continue;
+            }
+            var escapedLength = Uri.EscapeDataString(text).Length;
+            if (escapedLength > maxUrlLength)
+            {
+                await FlushAsync();
+                result.Add(await TranslateMyMemorySingleAsync(text, from, to));
+                continue;
+            }
+
+            if (group.Count > 0 && groupLength + escapedLength + 1 > maxUrlLength)
+            {
+                await FlushAsync();
+            }
+            group.Add(text);
+            groupLength += escapedLength + 1;
         }
+        await FlushAsync();
         return result;
+    }
+
+    private static async Task<List<string>?> TranslateMyMemoryJoinedSafeAsync(
+        string joined, string from, string to)
+    {
+        try
+        {
+            var url = "https://api.mymemory.translated.net/get?q=" + Uri.EscapeDataString(joined) +
+                      "&langpair=" + Uri.EscapeDataString(from + "|" + to);
+            var body = await MyMemoryGetAsync(url);
+            if (body is null) return null;
+            using var doc = JsonDocument.Parse(body);
+            var value = doc.RootElement.GetProperty("responseData").GetProperty("translatedText").GetString()
+                        ?? string.Empty;
+            value = WebUtility.HtmlDecode(value);
+            return value.Split('\n').ToList();
+        }
+        catch
+        {
+            return null;
+        }
     }
 
     private static async Task<string> TranslateMyMemorySingleAsync(string text, string from, string to)
     {
-        var url = "https://api.mymemory.translated.net/get?q=" + Uri.EscapeDataString(text) +
-                  "&langpair=" + Uri.EscapeDataString(from + "|" + to);
-        using var response = await Client.GetAsync(url);
-        var body = await response.Content.ReadAsStringAsync();
-        if (!response.IsSuccessStatusCode) return text;
-        using var doc = JsonDocument.Parse(body);
-        var value = doc.RootElement.GetProperty("responseData").GetProperty("translatedText").GetString() ?? text;
-        return WebUtility.HtmlDecode(value);
+        if (text.Length == 0) return text;
+        if (text.Length <= 280)
+        {
+            return await TranslateMyMemoryShortAsync(text, from, to);
+        }
+
+        var builder = new System.Text.StringBuilder();
+        for (var offset = 0; offset < text.Length; offset += 280)
+        {
+            var length = Math.Min(280, text.Length - offset);
+            var piece = text.Substring(offset, length);
+            builder.Append(await TranslateMyMemoryShortAsync(piece, from, to));
+            builder.Append(' ');
+        }
+        return builder.ToString().Trim();
+    }
+
+    private static async Task<string> TranslateMyMemoryShortAsync(string text, string from, string to)
+    {
+        try
+        {
+            var url = "https://api.mymemory.translated.net/get?q=" + Uri.EscapeDataString(text) +
+                      "&langpair=" + Uri.EscapeDataString(from + "|" + to);
+            var body = await MyMemoryGetAsync(url);
+            if (body is null) return text;
+            using var doc = JsonDocument.Parse(body);
+            var value = doc.RootElement.GetProperty("responseData").GetProperty("translatedText").GetString();
+            return string.IsNullOrWhiteSpace(value) ? text : WebUtility.HtmlDecode(value);
+        }
+        catch
+        {
+            return text;
+        }
+    }
+
+    private static async Task<string?> MyMemoryGetAsync(string url)
+    {
+        await MyMemoryGate.WaitAsync();
+        try
+        {
+            var now = DateTime.UtcNow;
+            if (now < _myMemoryCooldownUntilUtc)
+            {
+                await Task.Delay(_myMemoryCooldownUntilUtc - now);
+            }
+
+            for (var attempt = 0; attempt < 3; attempt++)
+            {
+                var sinceLast = DateTime.UtcNow - _myMemoryLastRequestUtc;
+                if (sinceLast < TimeSpan.FromMilliseconds(350))
+                {
+                    await Task.Delay(TimeSpan.FromMilliseconds(350) - sinceLast);
+                }
+
+                using var response = await Client.GetAsync(url);
+                _myMemoryLastRequestUtc = DateTime.UtcNow;
+                if (response.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
+                {
+                    var wait = TimeSpan.FromSeconds(2 * (attempt + 1));
+                    _myMemoryCooldownUntilUtc = DateTime.UtcNow + wait;
+                    if (attempt == 2) return null;
+                    await Task.Delay(wait);
+                    continue;
+                }
+
+                if (!response.IsSuccessStatusCode) return null;
+                return await response.Content.ReadAsStringAsync();
+            }
+            return null;
+        }
+        catch
+        {
+            return null;
+        }
+        finally
+        {
+            MyMemoryGate.Release();
+        }
     }
 
     private static string DetectSource(IReadOnlyList<string> texts)

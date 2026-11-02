@@ -1798,18 +1798,34 @@ public sealed partial class SettingsWindow : Window
     private void BuildMaterialCards()
     {
         MicaMaterialCombo.Visibility = Visibility.Collapsed;
+        var micaSupported = ThemeMicaBackdrop.IsSupported;
+        var settings = App.Services.Settings;
+        if (!micaSupported && settings.MicaMaterial is "Mica" or "Alt")
+        {
+            settings.MicaMaterial = "Acrylic";
+            App.Services.SettingsStore.Save();
+        }
+
         var cards = new Grid { ColumnSpacing = 8, RowSpacing = 8, HorizontalAlignment = HorizontalAlignment.Stretch };
-        cards.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-        cards.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-        cards.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+        var rows = micaSupported ? 3 : 2;
+        for (var i = 0; i < rows; i++)
+        {
+            cards.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+        }
         cards.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         cards.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-        AddMaterialCard(cards, 0, 0, "Mica", "Mica", "柔和云母");
-        AddMaterialCard(cards, 0, 1, "Alt", "Mica Alt", "层次云母");
-        AddMaterialCard(cards, 1, 0, "Acrylic", "亚克力", "磨砂玻璃");
-        AddMaterialCard(cards, 1, 1, "AcrylicThin", "细亚克力", "更透亮的磨砂");
-        AddMaterialCard(cards, 2, 0, "Solid", "纯色", "不使用透明材质");
-        AddMaterialCard(cards, 2, 1, "Rainbow", "炫彩", "彩色渐变叠加");
+
+        var row = 0;
+        if (micaSupported)
+        {
+            AddMaterialCard(cards, 0, 0, "Mica", "Mica", "柔和云母");
+            AddMaterialCard(cards, 0, 1, "Alt", "Mica Alt", "层次云母");
+            row = 1;
+        }
+        AddMaterialCard(cards, row, 0, "Acrylic", "亚克力", "磨砂玻璃");
+        AddMaterialCard(cards, row, 1, "AcrylicThin", "细亚克力", "更透亮的磨砂");
+        AddMaterialCard(cards, row + 1, 0, "Solid", "纯色", "不使用透明材质");
+        AddMaterialCard(cards, row + 1, 1, "Rainbow", "炫彩", "彩色渐变叠加");
         AcrylicColorPanel.Children.Add(cards);
         RefreshMaterialCards();
     }

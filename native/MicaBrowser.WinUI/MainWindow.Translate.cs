@@ -178,15 +178,73 @@ public sealed partial class MainWindow
             App.Services.SettingsStore.Save();
             SetTransientStatus("翻译引擎：Bing");
         };
+        var libre = new MenuFlyoutItem
+        {
+            Text = (settings.TranslationProvider == "LibreTranslate" ? "● " : "") + "LibreTranslate（自建）"
+        };
+        libre.Click += (_, _) =>
+        {
+            settings.TranslationProvider = "LibreTranslate";
+            App.Services.SettingsStore.Save();
+            SetTransientStatus("翻译引擎：LibreTranslate");
+        };
         engine.Items.Add(deepSeek);
         engine.Items.Add(bing);
+        engine.Items.Add(libre);
         flyout.Items.Add(engine);
 
         var apiKey = new MenuFlyoutItem { Text = "DeepSeek API Key…" };
         apiKey.Click += async (_, _) => await ShowDeepSeekKeyDialogAsync();
         flyout.Items.Add(apiKey);
 
+        var libreConfig = new MenuFlyoutItem { Text = "LibreTranslate 地址…" };
+        libreConfig.Click += async (_, _) => await ShowLibreTranslateDialogAsync();
+        flyout.Items.Add(libreConfig);
+
         flyout.ShowAt(anchor);
+    }
+
+    private async Task ShowLibreTranslateDialogAsync()
+    {
+        var settings = App.Services.Settings;
+        var url = new TextBox
+        {
+            Header = "服务地址",
+            Text = string.IsNullOrWhiteSpace(settings.LibreTranslateUrl)
+                ? "http://127.0.0.1:5000"
+                : settings.LibreTranslateUrl,
+            PlaceholderText = "http://127.0.0.1:5000"
+        };
+        var key = new PasswordBox
+        {
+            Header = "API Key（可选）",
+            Password = settings.LibreTranslateApiKey ?? string.Empty
+        };
+        var panel = new StackPanel { Spacing = 10 };
+        panel.Children.Add(new TextBlock
+        {
+            Text = "填入自建 LibreTranslate 地址，程序会请求 /translate。",
+            TextWrapping = TextWrapping.Wrap,
+            Opacity = 0.7
+        });
+        panel.Children.Add(url);
+        panel.Children.Add(key);
+        var dialog = new ContentDialog
+        {
+            Title = "LibreTranslate",
+            Content = panel,
+            PrimaryButtonText = "保存",
+            CloseButtonText = "取消",
+            DefaultButton = ContentDialogButton.Primary,
+            XamlRoot = RootGrid.XamlRoot
+        };
+        if (await dialog.ShowAsync() == ContentDialogResult.Primary)
+        {
+            settings.LibreTranslateUrl = url.Text.Trim();
+            settings.LibreTranslateApiKey = key.Password.Trim();
+            App.Services.SettingsStore.Save();
+            SetTransientStatus("LibreTranslate 配置已保存", 4);
+        }
     }
 
     private async Task ShowDeepSeekKeyDialogAsync()
@@ -216,7 +274,7 @@ public sealed partial class MainWindow
         }
     }
 
-    private async Task TranslatePageAsync(string target, string targetLabel)
+    private async Task TranslatePageAsync(string target, string targetLabel, bool retry = true)
     {
         var tab = _activeTab;
         if (tab?.Core is null)
@@ -239,7 +297,8 @@ public sealed partial class MainWindow
         const string collectScript = """
             (function () {
               if (!document.body) return "[]";
-              if (window.__exetNodes && window.__exetNodes.length && window.__exetOriginal)
+              if (window.__exetNodes && window.__exetNodes.length && window.__exetOriginal &&
+                  window.__exetNodes.every(function (node) { return node.isConnected; }))
                 return JSON.stringify(window.__exetOriginal);
               const skip = /^(SCRIPT|STYLE|NOSCRIPT|TEXTAREA|CODE|PRE|SVG|CANVAS)$/i;
               const nodes = [];
@@ -287,7 +346,12 @@ public sealed partial class MainWindow
             }
 
             var done = 0;
-            using var gate = new SemaphoreSlim(3);
+            var appliedTotal = 0;
+            var changedTotal = 0;
+            var concurrency = settings.TranslationProvider == "DeepSeek"
+                ? 3
+                : settings.TranslationProvider == "LibreTranslate" ? 4 : 2;
+            using var gate = new SemaphoreSlim(concurrency);
             var tasks = batches.Select(async batch =>
             {
                 await gate.WaitAsync();
@@ -308,8 +372,17 @@ public sealed partial class MainWindow
                     var applyScript =
                         "(function(){const v=" + values +
                         ";const n=window.__exetNodes.slice(" + batch.Start + "," + (batch.Start + batch.Texts.Count) +
-                        ");for(let i=0;i<n.length&&i<v.length;i++){n[i].__exetTranslated=v[i];n[i].nodeValue=v[i];}return true;})()";
-                    await tab.Core.ExecuteScriptAsync(applyScript);
+                        ");let applied=0,changed=0;for(let i=0;i<n.length&&i<v.length;i++){if(!n[i].isConnected)continue;applied++;if(n[i].nodeValue!==v[i])changed++;n[i].__exetTranslated=v[i];n[i].nodeValue=v[i];}" +
+                        "return JSON.stringify({applied:applied,changed:changed});})()";
+                    var applyRaw = await tab.Core.ExecuteScriptAsync(applyScript);
+                    var applyJson = JsonSerializer.Deserialize<string>(applyRaw) ?? "{}";
+                    using (var applyDoc = JsonDocument.Parse(applyJson))
+                    {
+                        var applied = applyDoc.RootElement.TryGetProperty("applied", out var a) ? a.GetInt32() : 0;
+                        var changed = applyDoc.RootElement.TryGetProperty("changed", out var c) ? c.GetInt32() : 0;
+                        Interlocked.Add(ref appliedTotal, applied);
+                        Interlocked.Add(ref changedTotal, changed);
+                    }
                     await tab.Core.ExecuteScriptAsync("window.__exetShowingOriginal=false");
                     Interlocked.Add(ref done, batch.Texts.Count);
                     SetTransientStatus($"正在翻译 {done}/{texts.Count}…");
@@ -321,8 +394,23 @@ public sealed partial class MainWindow
             });
 
             await Task.WhenAll(tasks);
-            Logger.Info($"Translation done: {done}, target={target}");
-            SetTransientStatus($"翻译完成：{done} 段 → {targetLabel}（A 菜单可显示原文）", 8);
+            Logger.Info($"Translation done: requested={done}, applied={appliedTotal}, changed={changedTotal}, target={target}");
+            if (changedTotal == 0)
+            {
+                if (retry)
+                {
+                    SetTransientStatus("页面内容已变化，正在重新提取并翻译…", 4);
+                    await Task.Delay(500);
+                    await TranslatePageAsync(target, targetLabel, retry: false);
+                    return;
+                }
+                SetTransientStatus("翻译服务没有返回可显示的结果，请稍后重试或切换翻译引擎", 10);
+            }
+            else
+            {
+                var suffix = changedTotal < texts.Count ? $"（部分完成 {changedTotal}/{texts.Count}）" : "";
+                SetTransientStatus($"翻译完成：{changedTotal} 段 → {targetLabel}{suffix}", 8);
+            }
         }
         catch (Exception ex)
         {

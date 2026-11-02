@@ -1008,6 +1008,8 @@ public sealed partial class MainWindow
 
         try
         {
+            // Let client-rendered pages finish their first paint before sampling.
+            await Task.Delay(800);
             var raw = await tab.Core.ExecuteScriptAsync("""
                 (function(){
                   if (!document.body) return JSON.stringify({lang:'',text:''});
