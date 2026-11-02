@@ -37,9 +37,22 @@ if ($LASTEXITCODE -ne 0 -or -not (Test-Path (Join-Path $stage 'EXET.exe'))) {
     throw 'dotnet publish failed.'
 }
 
+# Version consistency check: the compiled EXE must match version.txt before
+# anything is copied to the installed browser directory.
+$displayVersion = (Get-Content (Join-Path $project '..ersion.txt') -Raw).Trim()
+$publishedFileVersion = (Get-Item (Join-Path $stage 'EXET.exe')).VersionInfo.FileVersion
+if (-not $publishedFileVersion.StartsWith($displayVersion, [StringComparison]::OrdinalIgnoreCase)) {
+    throw "Version mismatch: version.txt=$displayVersion, EXET.exe=$publishedFileVersion."
+}
+
 Copy-Item (Join-Path $stage '*') $output -Recurse -Force
 if (-not (Test-Path $targetExe)) {
     throw 'Could not install EXET into the user Programs directory.'
+}
+
+$installedFileVersion = (Get-Item $targetExe).VersionInfo.FileVersion
+if (-not $installedFileVersion.StartsWith($displayVersion, [StringComparison]::OrdinalIgnoreCase)) {
+    throw "Installed EXE version mismatch: expected $displayVersion, got $installedFileVersion."
 }
 
 if (Test-Path (Join-Path $root 'README.md')) {
