@@ -46,7 +46,7 @@ foreach ($iss in @(
 $readme = Join-Path $root 'README.md'
 if (Test-Path $readme) {
     $content = Get-Content $readme -Raw -Encoding UTF8
-    $content = $content -replace '版本：\d+\.\d+\.\d+', "版本：$next"
+    $content = $content -replace '(?m)^版本：.*$', "版本：$next"
     Set-Content -LiteralPath $readme -Value $content -Encoding UTF8 -NoNewline
 }
 

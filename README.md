@@ -2,8 +2,10 @@
 
 EXET 是一款原生 Windows 浏览器。窗口、标签页、地址栏、工具栏和设置页由 WinUI 3 原生控件绘制，网页内容由 WebView2 渲染。
 
+> 建议在 Windows 11 上使用；Windows 10 下 Mica 不可用，材质会降级为 Acrylic、纯色或炫彩。
+
 ```text
-版本：1.2.1
+版本：1.2.2
 平台：Windows 10 1809+ / Windows 11，x64
 许可：MIT
 ```
