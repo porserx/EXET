@@ -1,5 +1,5 @@
 ﻿#define MyAppName "EXET"
-#define MyAppVersion "1.2.1"
+#define MyAppVersion "1.2.2"
 #define MyAppPublisher "EXET"
 #define MyAppExeName "EXET.exe"
 
@@ -77,14 +77,12 @@ end;
 
 [Files]
 Source: "..\EXET\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "..\MicrosoftEdgeWebView2RuntimeInstallerX64.exe"; DestDir: "{tmp}"; Flags: deleteafterinstall
 
 [Icons]
 Name: "{group}\EXET"; Filename: "{app}\{#MyAppExeName}"
 Name: "{autodesktop}\EXET"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
 
 [Run]
-Filename: "{tmp}\MicrosoftEdgeWebView2RuntimeInstallerX64.exe"; Parameters: "/silent /install"; StatusMsg: "正在安装 Microsoft Edge WebView2 运行时..."; Flags: waituntilterminated
 Filename: "{app}\{#MyAppExeName}"; Description: "启动 EXET"; Flags: nowait postinstall skipifsilent
 
 [UninstallRun]

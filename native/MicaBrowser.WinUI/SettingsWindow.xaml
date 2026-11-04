@@ -1086,11 +1086,12 @@
                                         <ComboBox x:Name="UiFontCombo"
                                                   HorizontalAlignment="Stretch"
                                                   IsEditable="True"
-                                                  PlaceholderText="MiSans"
+                                                  PlaceholderText="Microsoft YaHei UI"
                                                   SelectionChanged="UiFontCombo_SelectionChanged"
                                                   LostFocus="UiFontCombo_LostFocus"
                                                   KeyDown="UiFontCombo_KeyDown">
-                                            <ComboBoxItem Content="MiSans 默认" Tag="MiSans" />
+                                            <ComboBoxItem Content="微软雅黑 默认" Tag="Microsoft YaHei UI" />
+                                            <ComboBoxItem Content="MiSans" Tag="MiSans" />
                                                                                         <ComboBoxItem Content="微软雅黑" Tag="Microsoft YaHei UI" />
                                             <ComboBoxItem Content="等线" Tag="DengXian" />
                                             <ComboBoxItem Content="宋体" Tag="SimSun" />

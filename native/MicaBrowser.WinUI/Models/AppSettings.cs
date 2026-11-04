@@ -62,7 +62,7 @@ public sealed class AppSettings : ObservableObject
     private string _ghostDownloaderPath = "ghd";
     private int _browserZoom = 100;
     private string _accentColor = "#1F70B8";
-    private string _uiFontFamily = "MiSans";
+    private string _uiFontFamily = "Microsoft YaHei UI";
     private int _uiFontWeight = 400;
     private bool _nightMode;
     private bool _verticalTabsIconsOnly;

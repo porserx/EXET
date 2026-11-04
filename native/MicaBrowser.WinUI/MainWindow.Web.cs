@@ -216,8 +216,6 @@ public sealed partial class MainWindow
         {
             _addressTyping = false;
             HideAddressSuggestions();
-            AddressLoading.Visibility = Visibility.Visible;
-            AddressLoading.IsActive = true;
             SetAddressBoxText(tab.IsHomePage ? string.Empty : args.Uri);
         }
     }
@@ -294,8 +292,6 @@ public sealed partial class MainWindow
 
         if (ReferenceEquals(_activeTab, tab))
         {
-            AddressLoading.IsActive = false;
-            AddressLoading.Visibility = Visibility.Collapsed;
             UpdateAddressBar();
             UpdateNavigationState();
             UpdateShieldState();
@@ -636,6 +632,7 @@ public sealed partial class MainWindow
             var status = done ? "已完成" : failed ? "下载失败" : paused ? "已暂停" : "正在下载";
             DispatcherQueue.TryEnqueue(() =>
             {
+                var wasComplete = item.IsComplete;
                 item.TotalBytes = Math.Max(0, progress.FileSize);
                 item.ReceivedBytes = Math.Max(0, (long)(progress.FileSize * Math.Clamp(progress.Progress, 0, 100) / 100));
                 item.State = status;
@@ -643,6 +640,10 @@ public sealed partial class MainWindow
                 item.IsFailed = failed;
                 UpdateStatusBar();
                 SaveDownloadHistory();
+                if (done && !wasComplete)
+                {
+                    NotifyDownloadCompleted(item);
+                }
             });
             if (done || failed) return;
         }
@@ -652,6 +653,7 @@ public sealed partial class MainWindow
     {
         void Update()
         {
+            var wasComplete = item.IsComplete;
             item.ReceivedBytes = Math.Max(0, operation.BytesReceived);
             item.TotalBytes = Math.Max(0, operation.TotalBytesToReceive);
             switch (operation.State)
@@ -672,6 +674,10 @@ public sealed partial class MainWindow
             }
 
             UpdateStatusBar();
+            if (item.IsComplete && !wasComplete)
+            {
+                NotifyDownloadCompleted(item);
+            }
         }
 
         if (DispatcherQueue.HasThreadAccess)
@@ -790,8 +796,7 @@ public sealed partial class MainWindow
 
         if (ReferenceEquals(_activeTab, tab))
         {
-            UpdateLoadingState(true);
-        }
+            }
 
         try
         {
@@ -991,10 +996,12 @@ public sealed partial class MainWindow
 
     private async Task TryAutoTranslateAsync(BrowserTab tab)
     {
-        if (!App.Services.Settings.SmartTranslateEnabled ||
+        var autoSettings = App.Services.Settings;
+        if (!autoSettings.SmartTranslateEnabled ||
             tab.Core is null ||
             tab.IsPrivate ||
             tab.IsHomePage ||
+            IsAutoTranslateExcludedUrl(tab.Url, autoSettings.HomePage) ||
             !Uri.TryCreate(tab.Url, UriKind.Absolute, out var uri) ||
             (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps) ||
             uri.AbsolutePath.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
@@ -1032,7 +1039,8 @@ public sealed partial class MainWindow
 
             var (detected, confidence) = DetectTextLanguage(text, lang);
             var target = SystemTranslationTarget();
-            if (detected is null || detected == target || confidence < 0.55) return;
+            if (detected is null || detected == target || confidence < 0.85) return;
+            if (TargetLanguageShare(text, target) > 0.05) return;
 
             SetTransientStatus(
                 $"检测到网页语言：{TranslationLanguageLabel(detected)}，正在自动翻译…", 5);
@@ -1042,6 +1050,62 @@ public sealed partial class MainWindow
         {
             Logger.Warn("Smart translation check failed.", ex);
         }
+    }
+
+    private static bool IsAutoTranslateExcludedUrl(string url, string? homePage)
+    {
+        if (string.IsNullOrWhiteSpace(url)) return true;
+        if (url.StartsWith("about:", StringComparison.OrdinalIgnoreCase) ||
+            url.StartsWith("edge:", StringComparison.OrdinalIgnoreCase) ||
+            url.StartsWith("chrome:", StringComparison.OrdinalIgnoreCase) ||
+            url.StartsWith("view-source:", StringComparison.OrdinalIgnoreCase) ||
+            url.StartsWith("file:", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        if (!Uri.TryCreate(url, UriKind.Absolute, out var page)) return true;
+        var path = page.AbsolutePath.TrimEnd('/').ToLowerInvariant();
+        if (path.EndsWith("/newtab") || path.EndsWith("/new-tab") || path.EndsWith("/startpage"))
+        {
+            return true;
+        }
+
+        if (Uri.TryCreate(homePage, UriKind.Absolute, out var home) &&
+            string.Equals(page.Host, home.Host, StringComparison.OrdinalIgnoreCase) &&
+            string.Equals(path, home.AbsolutePath.TrimEnd('/').ToLowerInvariant(), StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+        return false;
+    }
+
+    private static double TargetLanguageShare(string text, string target)
+    {
+        var total = 0;
+        var matching = 0;
+        foreach (var ch in text)
+        {
+            var isLetter = char.IsLetter(ch);
+            var isCjk = ch >= '\u4e00' && ch <= '\u9fff';
+            var isKana = ch >= '\u3040' && ch <= '\u30ff';
+            var isHangul = ch >= '\uac00' && ch <= '\ud7af';
+            var isCyrillic = ch >= '\u0400' && ch <= '\u04ff';
+            var isArabic = ch >= '\u0600' && ch <= '\u06ff';
+            var isLatin = isLetter && !isCjk && !isKana && !isHangul && !isCyrillic && !isArabic;
+            if (!isLetter && !isCjk && !isKana && !isHangul) continue;
+            total++;
+            matching += target switch
+            {
+                "zh-CN" or "zh-TW" => isCjk ? 1 : 0,
+                "ja" => isCjk || isKana ? 1 : 0,
+                "ko" => isHangul ? 1 : 0,
+                "ru" => isCyrillic ? 1 : 0,
+                "ar" => isArabic ? 1 : 0,
+                _ => isLatin ? 1 : 0
+            };
+        }
+        return total == 0 ? 0 : (double)matching / total;
     }
 
     private static string SystemTranslationTarget()

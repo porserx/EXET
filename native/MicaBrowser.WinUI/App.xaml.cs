@@ -3,6 +3,7 @@ using MicaBrowser.Services;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
+using Microsoft.Windows.AppNotifications;
 
 namespace MicaBrowser;
 
@@ -49,6 +50,14 @@ public partial class App : Application
 
             Services = new AppServices();
             Services.LoadState();
+            try
+            {
+                AppNotificationManager.Default.Register();
+            }
+            catch (Exception notificationEx)
+            {
+                Logger.Warn("Windows notifications are unavailable.", notificationEx);
+            }
             Localization.English = string.Equals(
                 Services.Settings.Language,
                 "en-US",

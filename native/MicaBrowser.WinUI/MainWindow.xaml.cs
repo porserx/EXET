@@ -20,6 +20,8 @@ using Microsoft.Web.WebView2.Core;
 using Windows.Graphics;
 using Windows.UI;
 using WinRT.Interop;
+using Microsoft.Windows.AppNotifications;
+using Microsoft.Windows.AppNotifications.Builder;
 
 namespace MicaBrowser;
 
@@ -190,8 +192,8 @@ public sealed partial class MainWindow : Window
 
 
 
-        AddressBox.FontFamily = new FontFamily("Segoe UI");
-        AddressDisplay.FontFamily = new FontFamily("Segoe UI");
+        AddressBox.FontFamily = new FontFamily("Microsoft YaHei UI");
+        AddressDisplay.FontFamily = new FontFamily("Microsoft YaHei UI");
         BuildAddressContextMenu();
         ConfigureCaptionHover();
         InstallDownloadDeleteButtons();
@@ -2977,10 +2979,31 @@ public sealed partial class MainWindow : Window
         }
     }
 
-    private void UpdateLoadingState(bool loading)
+    private bool IsWindowMinimized()
     {
-        AddressLoading.IsActive = loading;
-        AddressLoading.Visibility = loading ? Visibility.Visible : Visibility.Collapsed;
+        return _appWindow?.Presenter is OverlappedPresenter presenter &&
+               presenter.State == OverlappedPresenterState.Minimized;
+    }
+
+    private void NotifyDownloadCompleted(DownloadItem item)
+    {
+        if (!IsWindowMinimized() || string.IsNullOrWhiteSpace(item.FileName))
+        {
+            return;
+        }
+
+        try
+        {
+            var notification = new AppNotificationBuilder()
+                .AddText("下载完成")
+                .AddText(item.FileName)
+                .BuildNotification();
+            AppNotificationManager.Default.Show(notification);
+        }
+        catch (Exception ex)
+        {
+            Logger.Warn("Could not show download notification.", ex);
+        }
     }
 
     private void RefreshTabAudioStates()
@@ -3018,7 +3041,7 @@ public sealed partial class MainWindow : Window
         ToolbarRow.Resources["ButtonBackgroundPressed"] = pressed;
     }
 
-    public const string DefaultUiFontFamily = "MiSans";
+    public const string DefaultUiFontFamily = "Microsoft YaHei UI";
 
     public void ApplyPrivacySettings()
     {

@@ -29,6 +29,8 @@ public sealed partial class SettingsWindow : Window
     private readonly List<(Button Card, string Tag)> _materialCards = new();
     private bool _syncingAcrylicColor;
     private bool _settingsNavCollapsed;
+    private StackPanel? _clashSection;
+    private StackPanel? _translationSection;
     private Storyboard? _settingsNavAnimation;
 
     public ObservableCollection<FavoriteEntry> Favorites => App.Services.Favorites.Items;
@@ -55,6 +57,8 @@ public sealed partial class SettingsWindow : Window
         BuildBackdropCustomizationPanel();
         BuildPrelaunchCard();
         BuildProxyCard();
+        BuildTranslationSection();
+        BuildClashSection();
         BuildClashCard();
         BuildUserAgentCard();
         BuildSectionGroupHeader();
@@ -414,11 +418,13 @@ public sealed partial class SettingsWindow : Window
             "history" => 2,
             "downloads" => 3,
             "appearance" => 4,
-            "adguard" => 5,
-            "privacy" => 6,
-            "passwords" => 7,
-            "extensions" => 8,
-            "about" => 9,
+            "translation" => 5,
+            "adguard" => 6,
+            "privacy" => 7,
+            "passwords" => 8,
+            "extensions" => 9,
+            "clash" => 10,
+            "about" => 11,
             _ => 0
         };
 
@@ -453,25 +459,33 @@ public sealed partial class SettingsWindow : Window
         HistorySection.Visibility = index == 2 ? Visibility.Visible : Visibility.Collapsed;
         DownloadsSection.Visibility = index == 3 ? Visibility.Visible : Visibility.Collapsed;
         AppearanceSection.Visibility = index == 4 ? Visibility.Visible : Visibility.Collapsed;
-        AdGuardSection.Visibility = index == 5 ? Visibility.Visible : Visibility.Collapsed;
-        PrivacySection.Visibility = index == 6 ? Visibility.Visible : Visibility.Collapsed;
-        PasswordsSection.Visibility = index == 7 ? Visibility.Visible : Visibility.Collapsed;
-        ExtensionsSection.Visibility = index == 8 ? Visibility.Visible : Visibility.Collapsed;
-        AboutSection.Visibility = index == 9 ? Visibility.Visible : Visibility.Collapsed;
+        if (_translationSection is not null)
+        {
+            _translationSection.Visibility = index == 5 ? Visibility.Visible : Visibility.Collapsed;
+        }
+        AdGuardSection.Visibility = index == 6 ? Visibility.Visible : Visibility.Collapsed;
+        PrivacySection.Visibility = index == 7 ? Visibility.Visible : Visibility.Collapsed;
+        PasswordsSection.Visibility = index == 8 ? Visibility.Visible : Visibility.Collapsed;
+        ExtensionsSection.Visibility = index == 9 ? Visibility.Visible : Visibility.Collapsed;
+        if (_clashSection is not null)
+        {
+            _clashSection.Visibility = index == 10 ? Visibility.Visible : Visibility.Collapsed;
+        }
+        AboutSection.Visibility = index == 11 ? Visibility.Visible : Visibility.Collapsed;
 
-        if (index == 5)
+        if (index == 6)
         {
             RefreshAdGuardStats();
         }
-        else if (index == 7)
+        else if (index == 8)
         {
             UpdatePasswordStatus();
         }
-        else if (index == 8)
+        else if (index == 9)
         {
             _ = RefreshExtensionsAsync();
         }
-        else if (index == 9)
+        else if (index == 11)
         {
             RefreshAboutInfo();
         }
@@ -487,11 +501,13 @@ public sealed partial class SettingsWindow : Window
             2 => HistorySection,
             3 => DownloadsSection,
             4 => AppearanceSection,
-            5 => AdGuardSection,
-            6 => PrivacySection,
-            7 => PasswordsSection,
-            8 => ExtensionsSection,
-            9 => AboutSection,
+            5 => _translationSection ?? GeneralSection,
+            6 => AdGuardSection,
+            7 => PrivacySection,
+            8 => PasswordsSection,
+            9 => ExtensionsSection,
+            10 => _clashSection ?? GeneralSection,
+            11 => AboutSection,
             _ => GeneralSection
         };
         AnimateSection(section);
@@ -2040,9 +2056,265 @@ public sealed partial class SettingsWindow : Window
         GeneralSection.Children.Insert(Math.Min(3, GeneralSection.Children.Count), card);
     }
 
+    private void BuildTranslationSection()
+    {
+        var settings = App.Services.Settings;
+        _translationSection = new StackPanel { Spacing = 18, Visibility = Visibility.Collapsed };
+        _translationSection.Children.Add(new TextBlock
+        {
+            Text = "翻译",
+            Style = (Style)Application.Current.Resources["SectionTitleStyle"],
+            FontSize = 28
+        });
+        _translationSection.Children.Add(new TextBlock
+        {
+            Text = "翻译引擎、语言、智能翻译和选中文字翻译。",
+            Foreground = (Brush)Application.Current.Resources["TextFillColorSecondaryBrush"],
+            TextWrapping = TextWrapping.Wrap
+        });
+
+        var enginePanel = new StackPanel { Spacing = 10 };
+        enginePanel.Children.Add(new TextBlock
+        {
+            Text = "翻译引擎",
+            FontSize = 14,
+            FontWeight = Microsoft.UI.Text.FontWeights.SemiBold
+        });
+        var provider = new ComboBox { HorizontalAlignment = HorizontalAlignment.Stretch };
+        provider.Items.Add(new ComboBoxItem { Content = "DeepSeek API", Tag = "DeepSeek" });
+        provider.Items.Add(new ComboBoxItem { Content = "Bing 翻译", Tag = "Bing" });
+        provider.Items.Add(new ComboBoxItem { Content = "LibreTranslate（自建）", Tag = "LibreTranslate" });
+        provider.SelectedIndex = settings.TranslationProvider switch
+        {
+            "Bing" => 1,
+            "LibreTranslate" => 2,
+            _ => 0
+        };
+        provider.SelectionChanged += (_, _) =>
+        {
+            if (_loading) return;
+            settings.TranslationProvider = (provider.SelectedItem as ComboBoxItem)?.Tag as string ?? "DeepSeek";
+            App.Services.SettingsStore.Save();
+        };
+        enginePanel.Children.Add(provider);
+
+        var smart = new ToggleSwitch
+        {
+            Header = "智能翻译",
+            IsOn = settings.SmartTranslateEnabled,
+            OnContent = "开",
+            OffContent = "关"
+        };
+        smart.Toggled += (_, _) =>
+        {
+            if (_loading) return;
+            settings.SmartTranslateEnabled = smart.IsOn;
+            App.Services.SettingsStore.Save();
+        };
+        enginePanel.Children.Add(smart);
+        enginePanel.Children.Add(new TextBlock
+        {
+            Text = "只在网页几乎全是外语且与系统语言不一致时自动翻译。",
+            Style = (Style)Application.Current.Resources["CaptionTextStyle"],
+            TextWrapping = TextWrapping.Wrap
+        });
+        _translationSection.Children.Add(new Border
+        {
+            Style = (Style)Application.Current.Resources["SectionCardStyle"],
+            Child = enginePanel
+        });
+
+        var languagePanel = new StackPanel { Spacing = 10 };
+        languagePanel.Children.Add(new TextBlock
+        {
+            Text = "语言",
+            FontSize = 14,
+            FontWeight = Microsoft.UI.Text.FontWeights.SemiBold
+        });
+        var target = new ComboBox { Header = "目标语言", HorizontalAlignment = HorizontalAlignment.Stretch };
+        AddLanguageItems(target);
+        target.SelectedIndex = LanguageIndex(settings.TranslationTarget);
+        target.SelectionChanged += (_, _) =>
+        {
+            if (_loading) return;
+            settings.TranslationTarget = (target.SelectedItem as ComboBoxItem)?.Tag as string ?? "zh-CN";
+            App.Services.SettingsStore.Save();
+        };
+        var source = new ComboBox { Header = "源语言", HorizontalAlignment = HorizontalAlignment.Stretch };
+        source.Items.Add(new ComboBoxItem { Content = "自动检测", Tag = "auto" });
+        AddLanguageItems(source);
+        source.SelectedIndex = string.IsNullOrWhiteSpace(settings.TranslationSourceLanguage) ||
+                               settings.TranslationSourceLanguage == "auto"
+            ? 0
+            : LanguageIndex(settings.TranslationSourceLanguage) + 1;
+        source.SelectionChanged += (_, _) =>
+        {
+            if (_loading) return;
+            settings.TranslationSourceLanguage = (source.SelectedItem as ComboBoxItem)?.Tag as string ?? "auto";
+            App.Services.SettingsStore.Save();
+        };
+        languagePanel.Children.Add(target);
+        languagePanel.Children.Add(source);
+        _translationSection.Children.Add(new Border
+        {
+            Style = (Style)Application.Current.Resources["SectionCardStyle"],
+            Child = languagePanel
+        });
+
+        var accessPanel = new StackPanel { Spacing = 10 };
+        accessPanel.Children.Add(new TextBlock
+        {
+            Text = "服务配置",
+            FontSize = 14,
+            FontWeight = Microsoft.UI.Text.FontWeights.SemiBold
+        });
+        var deepSeekKey = new PasswordBox
+        {
+            Header = "DeepSeek API Key",
+            Password = settings.DeepSeekApiKey ?? string.Empty,
+            PlaceholderText = "sk-…"
+        };
+        deepSeekKey.LostFocus += (_, _) =>
+        {
+            settings.DeepSeekApiKey = deepSeekKey.Password.Trim();
+            App.Services.SettingsStore.Save();
+        };
+        var libreUrl = new TextBox
+        {
+            Header = "LibreTranslate 地址",
+            Text = string.IsNullOrWhiteSpace(settings.LibreTranslateUrl)
+                ? "http://127.0.0.1:5000"
+                : settings.LibreTranslateUrl
+        };
+        var libreKey = new PasswordBox
+        {
+            Header = "LibreTranslate API Key（可选）",
+            Password = settings.LibreTranslateApiKey ?? string.Empty
+        };
+        libreUrl.LostFocus += (_, _) =>
+        {
+            settings.LibreTranslateUrl = libreUrl.Text.Trim();
+            App.Services.SettingsStore.Save();
+        };
+        libreKey.LostFocus += (_, _) =>
+        {
+            settings.LibreTranslateApiKey = libreKey.Password.Trim();
+            App.Services.SettingsStore.Save();
+        };
+        accessPanel.Children.Add(deepSeekKey);
+        accessPanel.Children.Add(libreUrl);
+        accessPanel.Children.Add(libreKey);
+        accessPanel.Children.Add(new TextBlock
+        {
+            Text = "LibreTranslate 自建地址默认 http://127.0.0.1:5000，程序请求 /translate。",
+            Style = (Style)Application.Current.Resources["CaptionTextStyle"],
+            TextWrapping = TextWrapping.Wrap
+        });
+        _translationSection.Children.Add(new Border
+        {
+            Style = (Style)Application.Current.Resources["SectionCardStyle"],
+            Child = accessPanel
+        });
+
+        void AttachTranslationSection()
+        {
+            if (_translationSection is null) return;
+            if (GeneralSection?.Parent is Panel host && !host.Children.Contains(_translationSection))
+            {
+                host.Children.Add(_translationSection);
+            }
+        }
+        if (GeneralSection?.Parent is Panel)
+        {
+            AttachTranslationSection();
+        }
+        else
+        {
+            GeneralSection!.Loaded += (_, _) => AttachTranslationSection();
+        }
+
+        var item = new ListViewItem { Tag = "translation" };
+        var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 12 };
+        row.Children.Add(new FontIcon { Glyph = "\uE774", FontSize = 14 });
+        row.Children.Add(new TextBlock { Text = "翻译" });
+        item.Content = row;
+        SettingsNav.Items.Insert(5, item);
+    }
+
+    private static void AddLanguageItems(ComboBox combo)
+    {
+        combo.Items.Add(new ComboBoxItem { Content = "中文（简体）", Tag = "zh-CN" });
+        combo.Items.Add(new ComboBoxItem { Content = "English", Tag = "en" });
+        combo.Items.Add(new ComboBoxItem { Content = "日本語", Tag = "ja" });
+        combo.Items.Add(new ComboBoxItem { Content = "한국어", Tag = "ko" });
+        combo.Items.Add(new ComboBoxItem { Content = "Français", Tag = "fr" });
+        combo.Items.Add(new ComboBoxItem { Content = "Deutsch", Tag = "de" });
+        combo.Items.Add(new ComboBoxItem { Content = "Español", Tag = "es" });
+        combo.Items.Add(new ComboBoxItem { Content = "Русский", Tag = "ru" });
+        combo.Items.Add(new ComboBoxItem { Content = "العربية", Tag = "ar" });
+        combo.Items.Add(new ComboBoxItem { Content = "Português", Tag = "pt" });
+        combo.Items.Add(new ComboBoxItem { Content = "Italiano", Tag = "it" });
+    }
+
+    private static int LanguageIndex(string? code) => code switch
+    {
+        "en" => 1,
+        "ja" => 2,
+        "ko" => 3,
+        "fr" => 4,
+        "de" => 5,
+        "es" => 6,
+        "ru" => 7,
+        "ar" => 8,
+        "pt" => 9,
+        "it" => 10,
+        _ => 0
+    };
+
+    private void BuildClashSection()
+    {
+        _clashSection = new StackPanel { Spacing = 18, Visibility = Visibility.Collapsed };
+        _clashSection.Children.Add(new TextBlock
+        {
+            Text = "Clash Meta",
+            Style = (Style)Application.Current.Resources["SectionTitleStyle"],
+            FontSize = 28
+        });
+        _clashSection.Children.Add(new TextBlock
+        {
+            Text = "Mihomo Meta 内核、配置文件和端口。",
+            Foreground = (Brush)Application.Current.Resources["TextFillColorSecondaryBrush"],
+            TextWrapping = TextWrapping.Wrap
+        });
+
+        void AttachClashSection()
+        {
+            if (_clashSection is null) return;
+            if (GeneralSection?.Parent is Panel host && !host.Children.Contains(_clashSection))
+            {
+                host.Children.Add(_clashSection);
+            }
+        }
+        if (GeneralSection?.Parent is Panel)
+        {
+            AttachClashSection();
+        }
+        else
+        {
+            GeneralSection!.Loaded += (_, _) => AttachClashSection();
+        }
+
+        var item = new ListViewItem { Tag = "clash" };
+        var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 12 };
+        row.Children.Add(new FontIcon { Glyph = "\uE968", FontSize = 14 });
+        row.Children.Add(new TextBlock { Text = "Clash Meta" });
+        item.Content = row;
+        SettingsNav.Items.Insert(10, item);
+    }
+
     private void BuildClashCard()
     {
-        if (GeneralSection is null) return;
+        if (_clashSection is null) return;
         var settings = App.Services.Settings;
         var panel = new StackPanel { Spacing = 10 };
 
@@ -2189,7 +2461,7 @@ public sealed partial class SettingsWindow : Window
             status.Text = App.Services.Clash.StatusText(settings);
         };
 
-        GeneralSection.Children.Insert(Math.Min(1, GeneralSection.Children.Count), new Border
+        _clashSection.Children.Add(new Border
         {
             Style = (Style)Application.Current.Resources["SectionCardStyle"],
             Child = panel

@@ -36,6 +36,11 @@ public sealed class SettingsService
             Settings = new AppSettings();
         }
 
+        if (string.IsNullOrWhiteSpace(Settings.UiFontFamily) ||
+            string.Equals(Settings.UiFontFamily, "MiSans", StringComparison.OrdinalIgnoreCase))
+        {
+            Settings.UiFontFamily = "Microsoft YaHei UI";
+        }
         Settings.AdBlockAllowlist ??= new List<string>();
         Settings.PermissionRules ??= new Dictionary<string, string>();
         Settings.LastSession ??= new List<MicaBrowser.Models.SessionEntry>();
