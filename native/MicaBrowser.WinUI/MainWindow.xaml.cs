@@ -57,6 +57,10 @@ public sealed partial class MainWindow : Window
     private bool IsInlineSettingsOpen =>
         _inlineSettings is not null && _settingsHost?.Visibility == Visibility.Visible;
     private AppWindow? _appWindow;
+    private Flyout? _findFlyout;
+    private TextBox? _findBox;
+    private TextBlock? _findCount;
+    private int _findVersion;
     private IntPtr _hwnd;
     private Border? _horizontalTabIndicator;
     private Border? _horizontalHoverIndicator;
@@ -114,6 +118,17 @@ public sealed partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        var findAccelerator = new KeyboardAccelerator
+        {
+            Key = Windows.System.VirtualKey.F,
+            Modifiers = Windows.System.VirtualKeyModifiers.Control
+        };
+        findAccelerator.Invoked += (_, args) =>
+        {
+            OpenFindBar();
+            args.Handled = true;
+        };
+        RootGrid.KeyboardAccelerators.Add(findAccelerator);
         SuppressNewTabTooltips();
         EnableSidebarScrolling();
         InstallTranslateButton();
@@ -3003,6 +3018,221 @@ public sealed partial class MainWindow : Window
         catch (Exception ex)
         {
             Logger.Warn("Could not show download notification.", ex);
+        }
+    }
+
+    private void OpenFindBar()
+    {
+        EnsureFindFlyout();
+        if (_findFlyout is null || _findBox is null) return;
+        if (_findFlyout.IsOpen)
+        {
+            _findBox.Focus(FocusState.Programmatic);
+            _findBox.SelectAll();
+            return;
+        }
+
+        _findFlyout.ShowAt(AddressBox);
+        _findBox.Focus(FocusState.Programmatic);
+        _findBox.SelectAll();
+    }
+
+    private void EnsureFindFlyout()
+    {
+        if (_findFlyout is not null) return;
+
+        var panel = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            Spacing = 6,
+            Padding = new Thickness(2)
+        };
+        _findBox = new TextBox
+        {
+            Width = 230,
+            PlaceholderText = "在页面中查找",
+            FontSize = 13
+        };
+        _findBox.TextChanged += (_, _) => _ = RunFindAsync(_findBox.Text, 0);
+        _findBox.KeyDown += (_, args) =>
+        {
+            if (args.Key == Windows.System.VirtualKey.Enter)
+            {
+                _ = RunFindAsync(_findBox.Text, 1);
+                args.Handled = true;
+            }
+            else if (args.Key == Windows.System.VirtualKey.Escape)
+            {
+                CloseFindBar();
+                args.Handled = true;
+            }
+        };
+        _findCount = new TextBlock
+        {
+            MinWidth = 48,
+            VerticalAlignment = VerticalAlignment.Center,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            FontSize = 12,
+            Text = "0/0"
+        };
+
+        var previous = MakeFindButton("\uE74A", "上一个", () => _ = RunFindAsync(_findBox.Text, -1));
+        var next = MakeFindButton("\uE74B", "下一个", () => _ = RunFindAsync(_findBox.Text, 1));
+        var close = MakeFindButton("\uE711", "关闭", CloseFindBar);
+        panel.Children.Add(_findBox);
+        panel.Children.Add(_findCount);
+        panel.Children.Add(previous);
+        panel.Children.Add(next);
+        panel.Children.Add(close);
+
+        _findFlyout = new Flyout
+        {
+            Content = panel,
+            Placement = FlyoutPlacementMode.BottomEdgeAlignedRight
+        };
+        _findFlyout.Closed += (_, _) => ClearFindHighlights();
+    }
+
+    private Button MakeFindButton(string glyph, string tooltip, Action action)
+    {
+        var button = new Button
+        {
+            Width = 30,
+            Height = 30,
+            Padding = new Thickness(0),
+            Background = new SolidColorBrush(Colors.Transparent),
+            BorderThickness = new Thickness(0),
+            Content = new FontIcon
+            {
+                Glyph = glyph,
+                FontSize = 12,
+                FontFamily = new Microsoft.UI.Xaml.Media.FontFamily("Segoe MDL2 Assets")
+            }
+        };
+        ToolTipService.SetToolTip(button, tooltip);
+        button.Click += (_, _) => action();
+        return button;
+    }
+
+    private void CloseFindBar()
+    {
+        _findFlyout?.Hide();
+        ClearFindHighlights();
+    }
+
+    private void ClearFindHighlights()
+    {
+        _findVersion++;
+        if (_findCount is not null) _findCount.Text = "0/0";
+        var core = _activeTab?.Core;
+        if (core is null) return;
+        _ = core.ExecuteScriptAsync("""
+            (function(){
+              if (window.CSS && CSS.highlights) {
+                CSS.highlights.delete('exet-find');
+                CSS.highlights.delete('exet-find-current');
+              }
+              return true;
+            })()
+            """);
+    }
+
+    private async Task RunFindAsync(string query, int move)
+    {
+        var tab = _activeTab;
+        if (tab?.Core is null || _findCount is null) return;
+        var version = ++_findVersion;
+        var q = query ?? string.Empty;
+
+        if (q.Length == 0)
+        {
+            _findCount.Text = "0/0";
+            await tab.Core.ExecuteScriptAsync("""
+                (function(){
+                  if (window.CSS && CSS.highlights) {
+                    CSS.highlights.delete('exet-find');
+                    CSS.highlights.delete('exet-find-current');
+                  }
+                  return true;
+                })()
+                """);
+            return;
+        }
+
+        try
+        {
+            var script = """
+                (function(){
+                  const q = __QUERY__;
+                  const move = __MOVE__;
+                  if (!window.__exetFindState) {
+                    window.__exetFindState = { query: '', ranges: [], index: 0 };
+                    const style = document.createElement('style');
+                    style.textContent = '::highlight(exet-find){background:#ffd54f;color:#111;} ::highlight(exet-find-current){background:#ff8f00;color:#111;}';
+                    document.documentElement.appendChild(style);
+                  }
+                  const st = window.__exetFindState;
+                  const clear = function(){
+                    if (window.CSS && CSS.highlights) {
+                      CSS.highlights.delete('exet-find');
+                      CSS.highlights.delete('exet-find-current');
+                    }
+                    st.ranges = [];
+                    st.index = 0;
+                  };
+                  if (!q) { clear(); st.query = ''; return JSON.stringify({count:0,index:0}); }
+                  if (st.query !== q) {
+                    st.query = q;
+                    clear();
+                    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+                    const needle = q.toLowerCase();
+                    while (walker.nextNode() && st.ranges.length < 300) {
+                      const node = walker.currentNode;
+                      const parent = node.parentElement;
+                      if (!parent || !node.nodeValue || /^(SCRIPT|STYLE|NOSCRIPT|TEXTAREA)$/i.test(parent.tagName)) continue;
+                      const hay = node.nodeValue.toLowerCase();
+                      let pos = 0;
+                      while (st.ranges.length < 300 && (pos = hay.indexOf(needle, pos)) >= 0) {
+                        const range = document.createRange();
+                        range.setStart(node, pos);
+                        range.setEnd(node, pos + q.length);
+                        st.ranges.push(range);
+                        pos += Math.max(1, q.length);
+                      }
+                    }
+                  }
+                  if (!st.ranges.length) {
+                    clear();
+                    return JSON.stringify({count:0,index:0});
+                  }
+                  if (move !== 0) {
+                    st.index = (st.index + move + st.ranges.length) % st.ranges.length;
+                  } else if (st.index >= st.ranges.length) {
+                    st.index = 0;
+                  }
+                  if (window.CSS && CSS.highlights && window.Highlight) {
+                    CSS.highlights.set('exet-find', new Highlight(...st.ranges));
+                    CSS.highlights.set('exet-find-current', new Highlight(st.ranges[st.index]));
+                  }
+                  const current = st.ranges[st.index];
+                  const element = current && current.startContainer.parentElement;
+                  if (element) element.scrollIntoView({ block: 'center', inline: 'nearest' });
+                  return JSON.stringify({ count: st.ranges.length, index: st.index + 1 });
+                })()
+                """;
+            script = script.Replace("__QUERY__", JsonSerializer.Serialize(q)).Replace("__MOVE__", move.ToString());
+            var raw = await tab.Core.ExecuteScriptAsync(script);
+            if (version != _findVersion) return;
+            var json = JsonSerializer.Deserialize<string>(raw) ?? "{}";
+            using var doc = JsonDocument.Parse(json);
+            var count = doc.RootElement.TryGetProperty("count", out var c) ? c.GetInt32() : 0;
+            var index = doc.RootElement.TryGetProperty("index", out var i) ? i.GetInt32() : 0;
+            _findCount.Text = count == 0 ? "0/0" : $"{index}/{count}";
+        }
+        catch (Exception ex)
+        {
+            Logger.Warn("Find in page failed.", ex);
+            _findCount.Text = "0/0";
         }
     }
 

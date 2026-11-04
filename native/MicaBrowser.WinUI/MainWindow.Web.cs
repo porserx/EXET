@@ -82,7 +82,9 @@ public sealed partial class MainWindow
         core.Settings.AreDevToolsEnabled = true;
         core.Settings.AreDefaultContextMenusEnabled = true;
         core.Settings.IsStatusBarEnabled = false;
-        core.Settings.AreBrowserAcceleratorKeysEnabled = true;
+        // Keep Edge from handling Ctrl+J / Ctrl+H / Ctrl+D / Ctrl+Shift+S
+        // as its own download, history, favorite and settings panels.
+        core.Settings.AreBrowserAcceleratorKeysEnabled = false;
         tab.DefaultUserAgent = core.Settings.UserAgent;
         var userAgent = UserAgentProvider.Resolve(App.Services.Settings);
         if (!string.IsNullOrWhiteSpace(userAgent))
@@ -100,6 +102,44 @@ public sealed partial class MainWindow
         core.NewWindowRequested += (_, args) => OnNewWindowRequested(tab, args);
         core.PermissionRequested += (_, args) => OnPermissionRequested(tab, args);
         core.DownloadStarting += (_, args) => OnDownloadStarting(tab, args);
+        core.WebMessageReceived += (_, args) => OnWebShortcutMessage(args);
+        _ = core.AddScriptToExecuteOnDocumentCreatedAsync("""
+            (function () {
+              if (window.__exetShortcutInstalled) return;
+              window.__exetShortcutInstalled = true;
+              document.addEventListener('keydown', function (event) {
+                if (!event.ctrlKey || event.altKey) return;
+                const key = (event.key || '').toLowerCase();
+                let action = null;
+                if (key === 'f' && !event.shiftKey) action = 'find';
+                else if (key === 'p' && !event.shiftKey) action = 'print';
+                else if (key === 'u' && !event.shiftKey) action = 'viewsource';
+                else if (key === 't' && event.shiftKey) action = 'reopen';
+                else if (key === 's' && event.shiftKey) action = 'settings';
+                else if (key === 'j' && !event.shiftKey) action = 'downloads';
+                else if (key === 'h' && !event.shiftKey) action = 'history';
+                else if (key === 'd' && !event.shiftKey) action = 'favorite';
+                else if (key === 't' && !event.shiftKey) action = 'newtab';
+                else if (key === 'w' && !event.shiftKey) action = 'closetab';
+                else if (key === 'l' && !event.shiftKey) action = 'address';
+                else if (key === 'r' && !event.shiftKey) action = 'reload';
+                else if (key === 'n' && event.shiftKey) action = 'private';
+                else if (event.key === 'Tab' && event.shiftKey) action = 'previoustab';
+                else if (event.key === 'Tab') action = 'nexttab';
+                else if (key === '0' && !event.shiftKey) action = 'zoomreset';
+                else if (key === '+' || key === '=') action = 'zoomin';
+                else if (key === '-') action = 'zoomout';
+                else if (/^[1-9]$/.test(key) && !event.shiftKey) action = 'tab:' + key;
+                else if (event.key === 'F5') action = 'reload';
+                if (!action) return;
+                event.preventDefault();
+                event.stopPropagation();
+                if (window.chrome && window.chrome.webview) {
+                  window.chrome.webview.postMessage('exet-shortcut:' + action);
+                }
+              }, true);
+            })();
+            """);
         core.ContextMenuRequested += async (_, args) => await AddSearchContextMenuItemAsync(tab, args);
         core.ProcessFailed += (_, args) => Logger.Warn($"WebView2 process failed: {args.ProcessFailedKind}");
         if (!tab.IsPrivate)
@@ -120,6 +160,127 @@ public sealed partial class MainWindow
                 ? (tab.DefaultUserAgent ?? tab.Core.Settings.UserAgent)
                 : userAgent;
         }
+    }
+
+    private void OnWebShortcutMessage(CoreWebView2WebMessageReceivedEventArgs args)
+    {
+        string? message;
+        try
+        {
+            message = args.TryGetWebMessageAsString();
+        }
+        catch
+        {
+            return;
+        }
+
+        const string prefix = "exet-shortcut:";
+        if (message is null || !message.StartsWith(prefix, StringComparison.Ordinal)) return;
+        var action = message[prefix.Length..];
+        DispatcherQueue.TryEnqueue(() => HandleWebShortcut(action));
+    }
+
+    private void HandleWebShortcut(string action)
+    {
+        switch (action)
+        {
+            case "find":
+                OpenFindBar();
+                break;
+            case "print":
+                try
+                {
+                    _activeTab?.Core?.ShowPrintUI(CoreWebView2PrintDialogKind.Browser);
+                }
+                catch (Exception ex)
+                {
+                    Logger.Warn("Print failed.", ex);
+                    SetTransientStatus("打印失败：" + ex.Message, 6);
+                }
+                break;
+            case "viewsource":
+                if (_activeTab?.Url is { Length: > 0 } sourceUrl)
+                {
+                    NavigateActive("view-source:" + sourceUrl);
+                }
+                break;
+            case "nexttab":
+                SwitchTab(1);
+                break;
+            case "previoustab":
+                SwitchTab(-1);
+                break;
+            case "reopen":
+                if (_recentlyClosed.FirstOrDefault() is { } closed)
+                {
+                    _recentlyClosed.Remove(closed);
+                    CreateTab(closed.Url, true);
+                }
+                break;
+            case "zoomreset":
+                SetBrowserZoom(100);
+                break;
+            case "zoomin":
+                SetBrowserZoom(App.Services.Settings.BrowserZoom + 10);
+                break;
+            case "zoomout":
+                SetBrowserZoom(App.Services.Settings.BrowserZoom - 10);
+                break;
+            case "tab:1":
+            case "tab:2":
+            case "tab:3":
+            case "tab:4":
+            case "tab:5":
+            case "tab:6":
+            case "tab:7":
+            case "tab:8":
+            case "tab:9":
+                SelectTabByNumber(action[4] - '0');
+                break;
+            case "settings":
+                OpenSettings("general");
+                break;
+            case "downloads":
+                OpenSidebar("downloads");
+                break;
+            case "history":
+                OpenSidebar("history");
+                break;
+            case "favorite":
+                FavoriteButton_Click(FavoriteButton, new RoutedEventArgs());
+                break;
+            case "newtab":
+                CreateTab(null, true);
+                break;
+            case "private":
+                CreatePrivateTab();
+                break;
+            case "closetab":
+                CloseActiveTab();
+                break;
+            case "address":
+                AddressBox.Focus(FocusState.Programmatic);
+                AddressBox.SelectAll();
+                break;
+            case "reload":
+                _activeTab?.Core?.Reload();
+                break;
+        }
+    }
+
+    private void SwitchTab(int delta)
+    {
+        if (Tabs.Count < 2 || _activeTab is null) return;
+        var index = Tabs.IndexOf(_activeTab);
+        if (index < 0) return;
+        SelectTab(Tabs[(index + delta + Tabs.Count) % Tabs.Count]);
+    }
+
+    private void SelectTabByNumber(int number)
+    {
+        if (Tabs.Count == 0) return;
+        var index = number == 9 ? Tabs.Count - 1 : Math.Min(number - 1, Tabs.Count - 1);
+        SelectTab(Tabs[index]);
     }
 
     private void OnWebResourceRequested(BrowserTab tab, CoreWebView2WebResourceRequestedEventArgs args)
