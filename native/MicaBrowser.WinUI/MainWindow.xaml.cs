@@ -130,6 +130,7 @@ public sealed partial class MainWindow : Window
         };
         RootGrid.KeyboardAccelerators.Add(findAccelerator);
         SuppressNewTabTooltips();
+        RemoveNewTabAccelerator();
         EnableSidebarScrolling();
         InstallTranslateButton();
         InstallProxyButton();
@@ -3517,6 +3518,31 @@ public sealed partial class MainWindow : Window
         Grid.SetColumn(MenuButton, 16);
         Grid.SetColumnSpan(ZoomOverlay, 17);
         ToolbarRow.Children.Add(button);
+    }
+
+    private void RemoveNewTabAccelerator()
+    {
+        var accelerator = RootGrid.KeyboardAccelerators.FirstOrDefault(item =>
+            item.Key == Windows.System.VirtualKey.T &&
+            item.Modifiers == Windows.System.VirtualKeyModifiers.Control);
+        if (accelerator is not null)
+        {
+            RootGrid.KeyboardAccelerators.Remove(accelerator);
+        }
+        RootGrid.AddHandler(UIElement.KeyDownEvent, new KeyEventHandler(OnRootKeyDown), true);
+    }
+
+    private void OnRootKeyDown(object sender, KeyRoutedEventArgs e)
+    {
+        if (e.Key == Windows.System.VirtualKey.T &&
+            Microsoft.UI.Input.InputKeyboardSource.GetKeyStateForCurrentThread(Windows.System.VirtualKey.Control)
+                .HasFlag(Windows.UI.Core.CoreVirtualKeyStates.Down) &&
+            !Microsoft.UI.Input.InputKeyboardSource.GetKeyStateForCurrentThread(Windows.System.VirtualKey.Shift)
+                .HasFlag(Windows.UI.Core.CoreVirtualKeyStates.Down))
+        {
+            e.Handled = true;
+            CreateTab(null, true);
+        }
     }
 
     private void SuppressNewTabTooltips()
