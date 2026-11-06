@@ -5,7 +5,7 @@ EXET 是一款原生 Windows 浏览器。窗口、标签页、地址栏、工具
 > 建议在 Windows 11 上使用；Windows 10 下 Mica 不可用，材质会降级为 Acrylic、纯色或炫彩。
 
 ```text
-版本：1.2.4
+版本：1.2.5
 平台：Windows 10 1809+ / Windows 11，x64
 许可：MIT
 ```

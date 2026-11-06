@@ -73,6 +73,7 @@ public sealed partial class MainWindow
     };
     private bool _windowDragTimerReady;
     private bool _isWindowDragging;
+    private bool _windowDragPending;
     private NativePoint _windowDragStartCursor;
     private PointInt32 _windowDragStartPosition;
     private UIElement? _dragSourceElement;
@@ -140,8 +141,9 @@ public sealed partial class MainWindow
             };
             ScreenToClient(hWnd, ref point);
             var scale = RootGrid.XamlRoot?.RasterizationScale ?? 1.0;
+            var x = point.X / scale;
             var y = point.Y / scale;
-            if (y >= 0 && y < 40)
+            if (y >= 0 && y < 40 && !IsTitleBarInteractive(x, y))
             {
                 return (IntPtr)HtCaption;
             }
@@ -153,7 +155,10 @@ public sealed partial class MainWindow
     private bool IsTitleBarInteractive(double x, double y)
     {
         if (IsPointInside(CustomCaptionButtons, x, y) ||
-            IsPointInside(HorizontalNewTabButton, x, y))
+            IsPointInside(HorizontalNewTabButton, x, y) ||
+            IsPointInside(HorizontalTabLayoutButton, x, y) ||
+            IsPointInside(HorizontalTabScrollLeftButton, x, y) ||
+            IsPointInside(HorizontalTabScrollRightButton, x, y))
         {
             return true;
         }
@@ -213,6 +218,32 @@ public sealed partial class MainWindow
 
     private void UpdateWindowDrag()
     {
+        if (_windowDragPending)
+        {
+            if ((GetAsyncKeyState(0x01) & 0x8000) == 0)
+            {
+                _windowDragPending = false;
+                _windowDragTimer.Stop();
+                return;
+            }
+            if (_appWindow is null || !GetCursorPos(out var pendingCursor))
+            {
+                return;
+            }
+            if (Math.Abs(pendingCursor.X - _windowDragStartCursor.X) < 4 &&
+                Math.Abs(pendingCursor.Y - _windowDragStartCursor.Y) < 4)
+            {
+                return;
+            }
+
+            _windowDragPending = false;
+            _windowDragTimer.Stop();
+            var pendingHwnd = Win32Interop.GetWindowFromWindowId(_appWindow.Id);
+            ReleaseCapture();
+            SendMessage(pendingHwnd, 0x00A1, (IntPtr)0x0002, IntPtr.Zero);
+            return;
+        }
+
         if (!_isWindowDragging)
         {
             _windowDragTimer.Stop();
@@ -356,7 +387,6 @@ public sealed partial class MainWindow
 
         _lastTitleBarClickTime = now;
         _lastTitleBarClickPoint = cursor;
-
         _isWindowDragging = true;
         _windowDragStartCursor = cursor;
         _windowDragStartPosition = _appWindow.Position;
@@ -2600,7 +2630,6 @@ public sealed partial class MainWindow
         var newTab = new MenuFlyoutItem { Text = "新建标签页", Icon = new FontIcon { Glyph = "\uE710" } };
         newTab.Click += (_, _) => CreateTab(null, true);
         var privateTab = new MenuFlyoutItem { Text = "新建无痕标签页", Icon = new FontIcon { Glyph = "\uE727" } };
-        privateTab.KeyboardAcceleratorTextOverride = "Ctrl+Shift+N";
         privateTab.Click += (_, _) => CreatePrivateTab();
         var newWindow = new MenuFlyoutItem { Text = "新建窗口", Icon = new FontIcon { Glyph = "\uE737" } };
         newWindow.Click += (_, _) =>

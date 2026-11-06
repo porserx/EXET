@@ -184,7 +184,7 @@ public sealed partial class MainWindow : Window
         }
 
         // Diagnostic: native WM_NCHITTEST drag only for now.
-        AttachWindowDrag(HorizontalTabStrip);
+        AttachWindowDrag(RootGrid);
         // AttachWindowDrag(VerticalWindowTitleBar);
         _appWindow.Closing += OnAppWindowClosing;
         _appWindow.Changed += (_, _) => UpdateCaptionGlyph();
@@ -1856,7 +1856,15 @@ public sealed partial class MainWindow : Window
                 new[] { new RectInt32(0, 0, width, height) });
 
             var passthrough = new List<RectInt32>();
-            AddPassthroughRegion(HorizontalTabList, passthrough, scale);
+            var listOrigin = HorizontalTabList.TransformToVisual(RootGrid)
+                .TransformPoint(new Windows.Foundation.Point(0, 0));
+            var tabAreaLeft = (int)Math.Floor(listOrigin.X * scale);
+            var tabAreaWidth = (int)Math.Ceiling(
+                Math.Max(0, HorizontalNewTabTransform.X - listOrigin.X) * scale);
+            if (tabAreaWidth > 0)
+            {
+                passthrough.Add(new RectInt32(tabAreaLeft, 0, tabAreaWidth, height));
+            }
             AddPassthroughRegion(HorizontalNewTabButton, passthrough, scale);
             AddPassthroughRegion(CustomCaptionButtons, passthrough, scale);
             source.SetRegionRects(NonClientRegionKind.Passthrough, passthrough.ToArray());
@@ -3522,26 +3530,37 @@ public sealed partial class MainWindow : Window
 
     private void RemoveNewTabAccelerator()
     {
-        var accelerator = RootGrid.KeyboardAccelerators.FirstOrDefault(item =>
-            item.Key == Windows.System.VirtualKey.T &&
-            item.Modifiers == Windows.System.VirtualKeyModifiers.Control);
-        if (accelerator is not null)
+        foreach (var accelerator in RootGrid.KeyboardAccelerators.ToList())
         {
-            RootGrid.KeyboardAccelerators.Remove(accelerator);
+            if ((accelerator.Key == Windows.System.VirtualKey.T &&
+                 accelerator.Modifiers == Windows.System.VirtualKeyModifiers.Control) ||
+                (accelerator.Key == Windows.System.VirtualKey.N &&
+                 accelerator.Modifiers == (Windows.System.VirtualKeyModifiers.Control |
+                                           Windows.System.VirtualKeyModifiers.Shift)))
+            {
+                RootGrid.KeyboardAccelerators.Remove(accelerator);
+            }
         }
         RootGrid.AddHandler(UIElement.KeyDownEvent, new KeyEventHandler(OnRootKeyDown), true);
     }
 
     private void OnRootKeyDown(object sender, KeyRoutedEventArgs e)
     {
-        if (e.Key == Windows.System.VirtualKey.T &&
-            Microsoft.UI.Input.InputKeyboardSource.GetKeyStateForCurrentThread(Windows.System.VirtualKey.Control)
-                .HasFlag(Windows.UI.Core.CoreVirtualKeyStates.Down) &&
-            !Microsoft.UI.Input.InputKeyboardSource.GetKeyStateForCurrentThread(Windows.System.VirtualKey.Shift)
-                .HasFlag(Windows.UI.Core.CoreVirtualKeyStates.Down))
+        var ctrl = Microsoft.UI.Input.InputKeyboardSource
+            .GetKeyStateForCurrentThread(Windows.System.VirtualKey.Control)
+            .HasFlag(Windows.UI.Core.CoreVirtualKeyStates.Down);
+        var shift = Microsoft.UI.Input.InputKeyboardSource
+            .GetKeyStateForCurrentThread(Windows.System.VirtualKey.Shift)
+            .HasFlag(Windows.UI.Core.CoreVirtualKeyStates.Down);
+        if (ctrl && e.Key == Windows.System.VirtualKey.T && !shift)
         {
             e.Handled = true;
             CreateTab(null, true);
+        }
+        else if (ctrl && shift && e.Key == Windows.System.VirtualKey.N)
+        {
+            e.Handled = true;
+            CreatePrivateTab();
         }
     }
 
