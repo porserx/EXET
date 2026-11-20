@@ -60,6 +60,7 @@ public sealed partial class SettingsWindow : Window
         BuildTranslationSection();
         BuildClashSection();
         BuildClashCard();
+        BuildDailyQuoteCard();
         BuildUserAgentCard();
         BuildSectionGroupHeader();
         BuildAdditionalToolbarChecks();
@@ -2270,6 +2271,129 @@ public sealed partial class SettingsWindow : Window
         "it" => 10,
         _ => 0
     };
+
+    private static readonly (string Text, string Author)[] DailyQuotes =
+    {
+        ("路漫漫其修远兮，吾将上下而求索。", "屈原"),
+        ("知之者不如好之者，好之者不如乐之者。", "孔子"),
+        ("不积跬步，无以至千里；不积小流，无以成江海。", "荀子"),
+        ("长风破浪会有时，直挂云帆济沧海。", "李白"),
+        ("山重水复疑无路，柳暗花明又一村。", "陆游"),
+        ("天行健，君子以自强不息。", "《周易》"),
+        ("纸上得来终觉浅，绝知此事要躬行。", "陆游"),
+        ("读书破万卷，下笔如有神。", "杜甫"),
+        ("会当凌绝顶，一览众山小。", "杜甫"),
+        ("海内存知己，天涯若比邻。", "王勃"),
+        ("非淡泊无以明志，非宁静无以致远。", "诸葛亮"),
+        ("博观而约取，厚积而薄发。", "苏轼"),
+        ("The only way to do great work is to love what you do.", "Steve Jobs"),
+        ("Simplicity is the ultimate sophistication.", "Leonardo da Vinci"),
+        ("What we think, we become.", "Buddha"),
+        ("Stay hungry, stay foolish.", "Steve Jobs"),
+        ("The journey is the reward.", "Chinese Proverb"),
+        ("Knowing yourself is the beginning of all wisdom.", "Aristotle")
+    };
+
+    private TextBlock? _quoteText;
+    private TextBlock? _quoteAuthor;
+    private int _quoteIndex;
+
+    private void BuildDailyQuoteCard()
+    {
+        if (AboutSection is null) return;
+
+        var quote = new TextBlock
+        {
+            TextWrapping = TextWrapping.Wrap,
+            FontSize = 17,
+            LineHeight = 28,
+            FontStyle = Windows.UI.Text.FontStyle.Italic
+        };
+        var author = new TextBlock
+        {
+            FontSize = 12,
+            HorizontalAlignment = HorizontalAlignment.Right,
+            Margin = new Thickness(0, 8, 0, 0)
+        };
+        var hint = new TextBlock
+        {
+            Text = "点击卡片换一句",
+            FontSize = 11,
+            HorizontalAlignment = HorizontalAlignment.Right,
+            Margin = new Thickness(0, 6, 0, 0),
+            Opacity = 0.55
+        };
+
+        var title = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
+        title.Children.Add(new FontIcon
+        {
+            Glyph = "\uE8D4",
+            FontSize = 15,
+            FontFamily = new Microsoft.UI.Xaml.Media.FontFamily("Segoe MDL2 Assets")
+        });
+        title.Children.Add(new TextBlock
+        {
+            Text = "每日一句",
+            FontSize = 14,
+            FontWeight = Microsoft.UI.Text.FontWeights.SemiBold
+        });
+
+        var panel = new StackPanel { Spacing = 6 };
+        panel.Children.Add(title);
+        panel.Children.Add(quote);
+        panel.Children.Add(author);
+        panel.Children.Add(hint);
+
+        var card = new Border
+        {
+            Style = (Style)Application.Current.Resources["SectionCardStyle"],
+            Child = panel,
+            Margin = new Thickness(0, 2, 0, 2)
+        };
+        var button = new Button
+        {
+            Content = card,
+            Background = new SolidColorBrush(Microsoft.UI.Colors.Transparent),
+            BorderThickness = new Thickness(0),
+            Padding = new Thickness(0),
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            HorizontalContentAlignment = HorizontalAlignment.Stretch,
+            VerticalContentAlignment = VerticalAlignment.Stretch
+        };
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(button, "每日一句，点击换一句");
+        button.Click += (_, _) => ShowRandomQuote();
+
+        _quoteText = quote;
+        _quoteAuthor = author;
+        _quoteIndex = Math.Abs(DateTime.Now.Year * 1000 + DateTime.Now.DayOfYear) % DailyQuotes.Length;
+        ApplyQuote();
+        AboutSection.Children.Insert(Math.Min(2, AboutSection.Children.Count), button);
+    }
+
+    private void ApplyQuote()
+    {
+        if (_quoteText is null || _quoteAuthor is null || DailyQuotes.Length == 0) return;
+        var item = DailyQuotes[Math.Clamp(_quoteIndex, 0, DailyQuotes.Length - 1)];
+        _quoteText.Text = item.Text;
+        _quoteAuthor.Text = "— " + item.Author;
+    }
+
+    private void ShowRandomQuote()
+    {
+        if (DailyQuotes.Length == 0) return;
+        if (DailyQuotes.Length == 1)
+        {
+            ApplyQuote();
+            return;
+        }
+        var next = _quoteIndex;
+        while (next == _quoteIndex)
+        {
+            next = Random.Shared.Next(DailyQuotes.Length);
+        }
+        _quoteIndex = next;
+        ApplyQuote();
+    }
 
     private void BuildClashSection()
     {
