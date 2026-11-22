@@ -152,8 +152,8 @@
                     </StackPanel>
                 </Border>
 
-                <ScrollViewer Grid.Column="1" Padding="44,26,44,44" Background="Transparent" VerticalScrollBarVisibility="Auto">
-                    <Grid MaxWidth="840" HorizontalAlignment="Left" Background="Transparent">
+                <ScrollViewer Grid.Column="1" Padding="48,28,48,48" Background="Transparent" VerticalScrollBarVisibility="Auto">
+                    <Grid MaxWidth="920" HorizontalAlignment="Center" Background="Transparent">
 
                         <StackPanel x:Name="GeneralSection" Spacing="18">
                             <StackPanel Spacing="4">

@@ -2305,22 +2305,22 @@ public sealed partial class SettingsWindow : Window
         var quote = new TextBlock
         {
             TextWrapping = TextWrapping.Wrap,
-            FontSize = 17,
-            LineHeight = 28,
-            FontStyle = Windows.UI.Text.FontStyle.Italic
+            FontSize = 16,
+            LineHeight = 26,
+            FontStyle = Windows.UI.Text.FontStyle.Italic,
+            Margin = new Thickness(0, 8, 0, 0)
         };
         var author = new TextBlock
         {
             FontSize = 12,
             HorizontalAlignment = HorizontalAlignment.Right,
-            Margin = new Thickness(0, 8, 0, 0)
+            Margin = new Thickness(0, 6, 0, 0)
         };
         var hint = new TextBlock
         {
-            Text = "点击卡片换一句",
+            Text = "点击换一句",
             FontSize = 11,
-            HorizontalAlignment = HorizontalAlignment.Right,
-            Margin = new Thickness(0, 6, 0, 0),
+            VerticalAlignment = VerticalAlignment.Center,
             Opacity = 0.55
         };
 
@@ -2338,16 +2338,37 @@ public sealed partial class SettingsWindow : Window
             FontWeight = Microsoft.UI.Text.FontWeights.SemiBold
         });
 
-        var panel = new StackPanel { Spacing = 6 };
-        panel.Children.Add(title);
-        panel.Children.Add(quote);
-        panel.Children.Add(author);
-        panel.Children.Add(hint);
+        var titleRow = new Grid();
+        titleRow.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        titleRow.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        titleRow.Children.Add(title);
+        Grid.SetColumn(hint, 1);
+        titleRow.Children.Add(hint);
+
+        var content = new StackPanel { Spacing = 0 };
+        content.Children.Add(titleRow);
+        content.Children.Add(quote);
+        content.Children.Add(author);
+
+        var accent = new Border
+        {
+            Width = 3,
+            Margin = new Thickness(0, 0, 12, 0),
+            CornerRadius = new CornerRadius(2),
+            Background = (Brush)Application.Current.Resources["AccentFillColorDefaultBrush"]
+        };
+        var layout = new Grid();
+        layout.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        layout.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        layout.Children.Add(accent);
+        Grid.SetColumn(content, 1);
+        layout.Children.Add(content);
 
         var card = new Border
         {
             Style = (Style)Application.Current.Resources["SectionCardStyle"],
-            Child = panel,
+            Child = layout,
+            Padding = new Thickness(16),
             Margin = new Thickness(0, 2, 0, 2)
         };
         var button = new Button
@@ -2360,6 +2381,8 @@ public sealed partial class SettingsWindow : Window
             HorizontalContentAlignment = HorizontalAlignment.Stretch,
             VerticalContentAlignment = VerticalAlignment.Stretch
         };
+        button.Resources["ButtonBackgroundPointerOver"] = new SolidColorBrush(Microsoft.UI.Colors.Transparent);
+        button.Resources["ButtonBackgroundPressed"] = new SolidColorBrush(Microsoft.UI.Colors.Transparent);
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(button, "每日一句，点击换一句");
         button.Click += (_, _) => ShowRandomQuote();
 

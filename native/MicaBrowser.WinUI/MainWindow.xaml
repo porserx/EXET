@@ -110,7 +110,7 @@
                                 <SolidColorBrush x:Key="ListViewItemBackgroundSelectedPointerOver" Color="Transparent" />
                                 <SolidColorBrush x:Key="ListViewItemBackgroundSelectedPressed" Color="Transparent" />
                                 <SolidColorBrush x:Key="ListViewItemBackgroundSelectedDisabled" Color="Transparent" />
-                                <SolidColorBrush x:Key="ListViewItemBackgroundPointerOver" Color="{ThemeResource SubtleFillColorSecondary}" />
+                                <SolidColorBrush x:Key="ListViewItemBackgroundPointerOver" Color="Transparent" />
                                 <SolidColorBrush x:Key="ListViewItemBackgroundPressed" Color="Transparent" />
                                 <SolidColorBrush x:Key="ListViewItemSelectionIndicatorBrush" Color="Transparent" />
                                 <SolidColorBrush x:Key="ListViewItemSelectionIndicatorPointerOverBrush" Color="Transparent" />
@@ -203,10 +203,11 @@
                                                 Canvas.ZIndex="20"
                                                 Width="18"
                                                 Height="18"
-                                                CornerRadius="9"
+                                                CornerRadius="0"
+                                                BorderThickness="0"
                                                 Margin="0,0,4,0"
                                                 HorizontalAlignment="Right"
-                                                Background="{ThemeResource ControlFillColorSecondaryBrush}"
+                                                Background="Transparent"
                                                 Tag="{x:Bind Id}"
                                                 Tapped="CloseTabIcon_Tapped"
                                                 ToolTipService.ToolTip="关闭标签页">
@@ -468,10 +469,11 @@
                                                 Canvas.ZIndex="20"
                                                 Width="18"
                                                 Height="18"
-                                                CornerRadius="9"
+                                                CornerRadius="0"
+                                                BorderThickness="0"
                                                 Margin="0,0,4,0"
                                                 HorizontalAlignment="Right"
-                                                Background="{ThemeResource ControlFillColorSecondaryBrush}"
+                                                Background="Transparent"
                                                 Tag="{x:Bind Id}"
                                                 Tapped="CloseTabIcon_Tapped"
                                                 ToolTipService.ToolTip="关闭标签页">

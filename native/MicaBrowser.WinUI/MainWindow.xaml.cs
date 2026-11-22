@@ -3431,12 +3431,12 @@ public sealed partial class MainWindow : Window
             if (content is not null) panel.Children.Add(content);
             var close = new Button
             {
-                Width = 34,
-                Height = 34,
+                Width = 28,
+                Height = 28,
                 Padding = new Thickness(0),
                 Background = new SolidColorBrush(Colors.Transparent),
                 BorderThickness = new Thickness(0),
-                CornerRadius = new CornerRadius(8),
+                CornerRadius = new CornerRadius(0),
                 HorizontalAlignment = HorizontalAlignment.Right,
                 VerticalAlignment = VerticalAlignment.Top,
                 Margin = new Thickness(0, 8, 12, 0),
@@ -3447,6 +3447,9 @@ public sealed partial class MainWindow : Window
                     FontFamily = new Microsoft.UI.Xaml.Media.FontFamily("Segoe MDL2 Assets")
                 }
             };
+            close.Resources["ButtonBackgroundPointerOver"] = new SolidColorBrush(Colors.Transparent);
+            close.Resources["ButtonBackgroundPressed"] = new SolidColorBrush(Colors.Transparent);
+            close.Resources["ButtonBackground"] = new SolidColorBrush(Colors.Transparent);
             ToolTipService.SetToolTip(close, "关闭设置");
             close.Click += (_, _) => CloseInlineSettings();
             panel.Children.Add(close);

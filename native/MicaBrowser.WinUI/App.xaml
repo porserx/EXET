@@ -90,11 +90,11 @@
             </Style>
 
             <Style x:Key="SectionCardStyle" TargetType="Border">
-                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
                 <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}" />
                 <Setter Property="BorderThickness" Value="1" />
-                <Setter Property="CornerRadius" Value="10" />
-                <Setter Property="Padding" Value="20" />
+                <Setter Property="CornerRadius" Value="12" />
+                <Setter Property="Padding" Value="18" />
             </Style>
 
             <Style x:Key="SectionTitleStyle" TargetType="TextBlock">
@@ -112,6 +112,7 @@
             </Style>
 
             <Style x:Key="HorizontalTabItemStyle" TargetType="ListViewItem">
+                <Setter Property="Background" Value="Transparent" />
                 <Setter Property="UseSystemFocusVisuals" Value="False" />
                 <Setter Property="FocusVisualPrimaryThickness" Value="0" />
                 <Setter Property="FocusVisualSecondaryThickness" Value="0" />
@@ -126,6 +127,7 @@
             </Style>
 
             <Style x:Key="VerticalTabItemStyle" TargetType="ListViewItem">
+                <Setter Property="Background" Value="Transparent" />
                 <Setter Property="UseSystemFocusVisuals" Value="False" />
                 <Setter Property="FocusVisualPrimaryThickness" Value="0" />
                 <Setter Property="FocusVisualSecondaryThickness" Value="0" />
@@ -139,6 +141,7 @@
             </Style>
 
             <Style x:Key="VerticalTabIconItemStyle" TargetType="ListViewItem">
+                <Setter Property="Background" Value="Transparent" />
                 <Setter Property="UseSystemFocusVisuals" Value="False" />
                 <Setter Property="FocusVisualPrimaryThickness" Value="0" />
                 <Setter Property="FocusVisualSecondaryThickness" Value="0" />
